@@ -44,16 +44,17 @@
     font-size: 14px;
 }
 
-.breadcrumbs a {
+.anchor {
     color: var(--accent);
     text-decoration: none;
+    cursor: pointer;
 }
 
-.breadcrumbs a:hover {
+.anchor:hover {
     text-decoration: underline;
 }
 
-.breadcrumbs span {
+.breadcrumbsSlash {
     color: var(--muted);
 }
 

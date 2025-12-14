@@ -6,9 +6,8 @@ import { getFromCache, saveToCache } from './imageCache.js';
 export async function createPreviewStream(root: string, relativePath: string) {
     const fullPath = resolveSafePath(root, relativePath);
 
-    console.log('fullPath', fullPath)
-
-    return sharp(fullPath);
+    return sharp(fullPath)
+      .rotate();
 }
 
 export async function createFileStream(root: string, relativePath: string) {
@@ -32,6 +31,7 @@ export async function createPreviewViewImage(
     }
 
     const buffer = await sharp(fullPath)
+        .rotate()
         .resize({
             width: VIEW_SIZE,
             height: VIEW_SIZE,
