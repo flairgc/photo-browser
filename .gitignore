@@ -1,0 +1,15 @@
+node_modules
+.env
+.idea
+
+# front
+/frontend/node_modules
+/frontend/build
+/frontend/.idea
+/frontend/.env
+
+# back
+/backend/node_modules
+/backend/build
+/backend/.idea
+/backend/.env

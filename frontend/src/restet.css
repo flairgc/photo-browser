@@ -1,0 +1,142 @@
+/* ================================
+   1. Box model
+   ================================ */
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+/* ================================
+   2. HTML / Body
+   ================================ */
+
+html,
+body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+}
+
+html {
+    -webkit-text-size-adjust: 100%;
+}
+
+body {
+    font-family:
+            system-ui,
+            -apple-system,
+            BlinkMacSystemFont,
+            'Segoe UI',
+            Roboto,
+            'Helvetica Neue',
+            Arial,
+            sans-serif;
+    line-height: 1.5;
+    color: #000;
+    background-color: #fff;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* Корневой контейнер SPA */
+#root {
+    min-height: 100%;
+}
+
+/* ================================
+   3. Headings & text
+   ================================ */
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p {
+    margin: 0;
+    font-weight: inherit;
+}
+
+/* ================================
+   4. Lists
+   ================================ */
+
+ul,
+ol {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+/* ================================
+   5. Links
+   ================================ */
+
+a {
+    color: inherit;
+    text-decoration: none;
+}
+
+a:focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: 2px;
+}
+
+/* ================================
+   6. Media
+   ================================ */
+
+img,
+picture,
+video,
+canvas,
+svg {
+    display: block;
+    max-width: 100%;
+    height: auto;
+}
+
+/* ================================
+   7. Forms
+   ================================ */
+
+button,
+input,
+textarea,
+select {
+    font: inherit;
+    color: inherit;
+    margin: 0;
+}
+
+button {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+}
+
+button:disabled {
+    cursor: default;
+}
+
+/* ================================
+   8. Tables
+   ================================ */
+
+table {
+    border-collapse: collapse;
+    border-spacing: 0;
+}
+
+/* ================================
+   9. Accessibility
+   ================================ */
+
+:focus:not(:focus-visible) {
+    outline: none;
+}
