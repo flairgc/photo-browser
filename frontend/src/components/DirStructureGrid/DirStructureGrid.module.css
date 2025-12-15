@@ -1,0 +1,44 @@
+
+.item {
+    width: 150px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 0 0 8px 0 ;
+    text-align: center;
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+}
+
+.icon {
+    width: 48px;
+    height: 48px;
+    margin: 8px auto 10px;
+}
+
+.name {
+    font-size: 13px;
+    line-height: 1.3;
+    word-break: break-word;
+}
+
+
+/* ===== Image ===== */
+
+.preview {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+    border-top-left-radius: var(--radius);
+    border-top-right-radius: var(--radius);
+    margin-bottom: 8px;
+}

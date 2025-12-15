@@ -1,35 +1,42 @@
+import path from 'path';
 import { FastifyInstance } from 'fastify';
-import { createPreviewStream, createFileStream, createPreviewViewImage } from '../services/image.service.js';
+import { createFileStream, createPreviewViewImage } from '../services/image.service.js';
 
-export default async function imageRoutes(app: FastifyInstance) {
-    app.get('/view', async (request, reply) => {
-        const { path } = request.query as { path: string };
+export default async function imageRoutes(fastify: FastifyInstance) {
 
-        console.log('path', path)
+    fastify.get('/file', async (request, reply) => {
+        const params = request.query as { path: string, preview?: null };
+        const { path: filePath  } = params;
 
-        const stream = await createPreviewStream(app.config.FS_ROOT, path);
 
-        reply.type('image/jpeg');
-        return reply.send(stream);
-    });
+        const stream = await createFileStream(fastify.config.FS_ROOT, filePath);
 
-    app.get('/file', async (request, reply) => {
-        const { path } = request.query as { path: string };
+      const ext = path.extname(filePath).toLowerCase();
+      const fileName = path.basename(filePath);
 
-        const stream = await createFileStream(app.config.FS_ROOT, path);
+      const isImage = ext === '.jpg' || ext === '.jpeg';
 
-        reply.header(
+      const isPreview = 'preview' in params && isImage;
+
+        reply
+          .header(
+            'Content-Type',
+            isPreview && isPreview ? 'image/jpeg' : 'application/octet-stream'
+          )
+          .header(
             'Content-Disposition',
-            `attachment; filename="${encodeURIComponent(path.split('/').pop()!)}"`
-        );
+            isPreview
+              ? `inline; filename="${encodeURIComponent(fileName)}"`
+              : `attachment; filename="${encodeURIComponent(fileName)}"`
+          );
 
         return reply.send(stream);
     });
 
-    app.get('/preview', async (request, reply) => {
-        const { path } = request.query as { path: string };
+    fastify.get('/preview', async (request, reply) => {
+        const { path, size } = request.query as { path: string, size: 'small' | 'big' };
 
-        const buffer = await createPreviewViewImage(app.config.FS_ROOT, path);
+        const buffer = await createPreviewViewImage(fastify.config.FS_ROOT, { relativePath: path, size });
 
         reply
             .type('image/jpeg')

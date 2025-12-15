@@ -1,42 +1,124 @@
-import { useEffect, useState, useSyncExternalStore } from 'react';
-import Lightbox from "yet-another-react-lightbox";
+import { useEffect, useState } from 'react';
+import {
+  Lightbox,
+  IconButton,
+  // createIcon,
+  useLightboxState,
+} from "yet-another-react-lightbox";
 import Fullscreen from "yet-another-react-lightbox/plugins/fullscreen";
 import Zoom from "yet-another-react-lightbox/plugins/zoom";
 import Captions from "yet-another-react-lightbox/plugins/captions";
+import Download from "yet-another-react-lightbox/plugins/download";
 import "yet-another-react-lightbox/styles.css";
 import "yet-another-react-lightbox/plugins/captions.css";
 
-import { fetchDir } from './services/common.ts';
+import { fetchDir } from './services/common.api.ts';
 import type { DirItem, DirResponse } from './types/api.ts';
+import { DirStructureGrid } from './components/DirStructureGrid/DirStructureGrid.tsx';
+import { navigate, usePathname } from './lib/navigation/navigation.ts';
+import type { DirItemWithIndex } from './types/fs.ts';
+import HomeIcon from './assets/home.svg?react';
+import ImageIcon from './assets/image.svg?react';
+import AlmazIcon from './assets/almaz.svg?react';
+import EyeIcon from './assets/eye.svg?react';
+import InfoIcon from './assets/info.svg?react';
+
 import styles from './App.module.css';
 
 
-function getCurrentPath() {
-  return decodeURIComponent(
-    window.location.pathname.replace(/^\/+/, '')
+declare module "yet-another-react-lightbox" {
+  interface Labels {
+    "Raw button"?: string;
+    "Open file button"?: string;
+    "Info button"?: string;
+  }
+  interface SlideImage {
+    rawUrl: string | null;
+    exifText: string | null;
+    previewUrl: string | null;
+  }
+}
+
+const DownloadRawButton = () => {
+  const { currentSlide } = useLightboxState();
+
+  const rawUrl = currentSlide?.rawUrl;
+
+  // todo допилить если download это объект
+  if (!rawUrl) return null;
+
+  const handleClick = () => {
+    const a = document.createElement('a');
+    a.href = rawUrl;
+    a.target = '_blank';      // 👈 ключевой момент
+    a.rel = 'noopener';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
+
+  return (
+    <IconButton
+      label="Raw button"
+      icon={AlmazIcon}
+      disabled={!currentSlide}
+      onClick={handleClick}
+    />
   );
-}
-
-function subscribe(callback: () => void) {
-  window.addEventListener('popstate', callback);
-  return () => window.removeEventListener('popstate', callback);
-}
-
-export function usePathname() {
-  return useSyncExternalStore(
-    subscribe,
-    getCurrentPath
-  );
-}
-
-export function navigate(path: string) {
-  window.history.pushState(null, '', '/' + encodeURIComponent(path));
-  window.dispatchEvent(new PopStateEvent('popstate'));
-}
-
-type DirItemWithIndex = DirItem & {
-  index?: number;
 };
+
+const OpenPreviwButton = () => {
+  const { currentSlide } = useLightboxState();
+
+
+  const previewUrl = currentSlide?.previewUrl;
+
+  // todo допилить если download это объект
+  if (!previewUrl) return null;
+
+  const handleClick = () => {
+    window.open(previewUrl, '_blank');
+
+    // const a = document.createElement('a');
+    // a.href = previewUrl;
+    // a.target = '_blank';      // 👈 ключевой момент
+    // a.rel = 'noopener';
+    // document.body.appendChild(a);
+    // a.click();
+    // document.body.removeChild(a);
+  }
+
+  return (
+    <IconButton
+      label="Open file button"
+      icon={EyeIcon}
+      disabled={!currentSlide}
+      onClick={handleClick}
+    />
+  );
+};
+
+const InfoButton = () => {
+  const { currentSlide } = useLightboxState();
+
+  const exifText = currentSlide?.exifText;
+
+  if (!exifText) return null;
+
+  const handleClick = () => {
+    alert(exifText);
+  }
+
+  return (
+    <IconButton
+      label="Info button"
+      icon={InfoIcon}
+      disabled={!currentSlide}
+      onClick={handleClick}
+    />
+  );
+};
+
 
 function splitAndSort(items: DirItem[]): {
   directories: DirItemWithIndex[];
@@ -80,17 +162,21 @@ function splitAndSort(items: DirItem[]): {
 export function App() {
 
   const currentPath = usePathname();
-  // const [currentPath, setCurrentPath] = useState(() => {
-  //   return getPathFromLocation();
-  // });
   const [currentDir, setCurrentDir] = useState<DirResponse>();
   const [imageIndexToOpen, setImageIndexToOpen] = useState<number | undefined>();
 
+  const [errorMessage, setErrorMessage] = useState('');
+
+  // filter
+  const [isOnlyImages, setIsOnlyImages] = useState(true);
+
   useEffect(() => {
-    fetchDir(currentPath).then((data) => {
+    fetchDir(currentPath, isOnlyImages).then((data) => {
       setCurrentDir(data);
+    }).catch(error => {
+      setErrorMessage(error?.response?.data?.message || `Error fetchDir ${currentPath}`);
     })
-  }, [currentPath]);
+  }, [currentPath, isOnlyImages]);
 
   useEffect(() => {
     const urlPath = '/' + encodeURIComponent(currentPath);
@@ -102,32 +188,16 @@ export function App() {
     );
   }, [currentPath]);
 
-  // useEffect(() => {
-  //   const onPopState = () => {
-  //     setCurrentPath(getPathFromLocation());
-  //   };
-  //
-  //   window.addEventListener('popstate', onPopState);
-  //
-  //   return () => {
-  //     window.removeEventListener('popstate', onPopState);
-  //   };
-  // }, []);
-
   const { directories, rest } = splitAndSort(currentDir?.content || []);
   const sortedItems = [...directories, ...rest];
-
-  console.log('sortedItems', sortedItems)
 
   const images = rest.filter(i => i.type === 'image');
 
   return (
-    <>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
       <header className={styles.header}>
-        <button className={styles.homeBtn} title="Домой" onClick={() => navigate('')}>
-          <svg viewBox="0 0 24 24">
-            <path d="M12 3l9 8h-3v9h-5v-6H11v6H6v-9H3z"/>
-          </svg>
+        <button className={styles.btn} title="Домой" onClick={() => navigate('')}>
+          <HomeIcon />
         </button>
 
         <nav className={styles.breadcrumbs}>
@@ -141,44 +211,20 @@ export function App() {
           )
           })}
         </nav>
+
+        <div>
+          <button className={styles.btn} style={{backgroundColor: isOnlyImages ? '#E5E7EB' : undefined}} title="Только изображения" onClick={() => setIsOnlyImages((f) => !f)}>
+            <ImageIcon />
+          </button>
+        </div>
       </header>
 
       <main className={styles.container}>
-        <div className={styles.grid}>
+        {errorMessage && <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>{errorMessage}</div>}
 
-          {sortedItems.map((item) => (
-            <div
-              key={item.name}
-              className={`${styles.item} ${item.type === 'directory' ? styles.folder : item.type === 'image' ? styles.image : styles.file}`}
-              onClick={() => {
-                if (item.type === 'directory') navigate(item.path);
-                if (item.type === 'image') setImageIndexToOpen(item.index);
-              }}
-            >
-              {item.type === 'image' ? (
-                <img
-                  className={styles.preview}
-                  src={`api/image/preview?path=${item.path}`}
-                />
-              ) : (
-                <div className="icon">
-                  {item.type === 'directory' ? (
-                    <svg viewBox="0 0 24 24" fill="#fbbf24">
-                      <path d="M10 4l2 2h8a2 2 0 012 2v10a2 2 0 01-2 2H4a2 2 0 01-2-2V6a2 2 0 012-2h6z"/>
-                    </svg>
-                  ) : (
-                    <svg viewBox="0 0 24 24" fill="#60a5fa">
-                      <path d="M6 2h9l5 5v15a2 2 0 01-2 2H6a2 2 0 01-2-2V4a2 2 0 012-2z"/>
-                    </svg>
-                  )}
+         <DirStructureGrid items={sortedItems} setImageIndexToOpen={setImageIndexToOpen}/>
 
-                </div>
-              )}
-              <div className={styles.name}>{item.name}</div>
-            </div>
-          ))}
 
-        </div>
       </main>
 
       <Lightbox
@@ -186,18 +232,25 @@ export function App() {
         close={() => setImageIndexToOpen(undefined)}
         index={imageIndexToOpen}
         slides={images.map((item) => ({
-          src: `api/image/view?path=${item.path}`,
+          src: `api/image/preview?path=${item.path}&size=big`,
           title: item.name,
+          download: `api/image/file?path=${item.path}`,
+          rawUrl: item.rawPath ? `/api/image/file?path=${encodeURIComponent(item.rawPath)}` : null,
+          exifText: item.exifText,
+          previewUrl: `api/image/file?path=${item.path}&preview`,
         }))}
         carousel={{
           finite: true,
-          preload: 1,
+          preload: 2,
         }}
         controller={{ closeOnPullDown: true, closeOnBackdropClick: true }}
         animation={{ fade: 100, swipe: 150 }}
-        plugins={[Fullscreen, Zoom, Captions]}
+        toolbar={{
+          buttons: [ <InfoButton key="open-preview-button" />, <OpenPreviwButton key="open-preview-button" />, <DownloadRawButton key="raw-button" />, "close"],
+        }}
+        plugins={[Fullscreen, Zoom, Captions, Download]}
       />
 
-    </>
+    </div>
   );
 }

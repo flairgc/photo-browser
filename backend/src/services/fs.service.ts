@@ -1,12 +1,14 @@
 import fs from 'fs/promises';
 // import path from 'path';
 import { resolveSafePath } from '../utils/safePath.js';
-
+import { readExifText } from '../utils/readExifText.js';
 
 export interface FsItem {
-    name: string;
-    path: string;
-    type: 'file' | 'directory' | 'image';
+  name: string;
+  path: string;
+  type: 'file' | 'directory' | 'image';
+  rawPath: string | null;
+  exifText: string | null;
 }
 
 export interface Breadcrumb {
@@ -36,41 +38,81 @@ function buildBreadcrumbs(relativePath: string) {
 }
 
 
-export async function getDirectoryStructure(root: string, relativePath: string): Promise<{
-    content: FsItem[],
-    breadcrumbs: Breadcrumb[],
+export async function getDirectoryStructure(
+  root: string,
+  { relativePath, onlyImages }: { relativePath: string, onlyImages: boolean }
+): Promise<{
+  content: FsItem[],
+  breadcrumbs: Breadcrumb[],
 }> {
-    const rawRelativePath = relativePath ?? '';
+  const rawRelativePath = relativePath ?? '';
+  const normalizedRelativePath = rawRelativePath.replace(/\\/g, '/');
+  const fullPath = resolveSafePath(root, normalizedRelativePath);
 
-    const normalizedRelativePath = rawRelativePath.replace(/\\/g, '/');
+  const entries = await fs.readdir(fullPath, { withFileTypes: true });
 
-    const fullPath = resolveSafePath(root, normalizedRelativePath);
+  // 1️⃣ Собираем все RAW-файлы в этой папке
+  const rawFiles = new Set(
+    entries
+      .filter(e => e.isFile() && /\.arw$/i.test(e.name))
+      .map(e => e.name.toLowerCase())
+  );
 
-    const entries = await fs.readdir(fullPath, { withFileTypes: true });
+  const content = await Promise.all(
+    entries.map(async (entry) => {
+      const entryPath = normalizedRelativePath
+        ? `${normalizedRelativePath}/${entry.name}`
+        : entry.name;
 
-    const content = await Promise.all(
-        entries.map(async (entry) => {
-            // ❗️ВАЖНО: формируем API-путь вручную, НЕ path.join
-            const entryPath = normalizedRelativePath
-                ? `${normalizedRelativePath}/${entry.name}`
-                : entry.name;
+      const fullEntryPath = resolveSafePath(root, entryPath);
 
-            const isImage = entry.isFile() && /\.(jpe?g|png|webp|gif)$/i.test(entry.name)
+      const isJpeg =
+        entry.isFile() && /\.(jpe?g)$/i.test(entry.name);
 
-            const type: FsItem['type'] = entry.isDirectory() ? 'directory' : isImage ? 'image' : 'file';
+      const isImage =
+        entry.isFile() && /\.(jpe?g|png|webp|gif)$/i.test(entry.name);
 
-            return {
-                name: entry.name,
-                path: entryPath,
-                type,
-            };
-        })
-    );
+      const type: FsItem['type'] =
+        entry.isDirectory() ? 'directory' : isImage ? 'image' : 'file';
 
-    const breadcrumbs = buildBreadcrumbs(normalizedRelativePath);
+      let rawPath: string | null = null;
+      let exifText: string | null = null;
 
-    return {
-        content,
-        breadcrumbs,
-    };
+      if (isImage) {
+        const baseName = entry.name.replace(/\.[^.]+$/, '');
+        const rawName = `${baseName}.ARW`;
+
+        if (rawFiles.has(rawName.toLowerCase())) {
+          rawPath = normalizedRelativePath
+            ? `${normalizedRelativePath}/${rawName}`
+            : rawName;
+        }
+      }
+
+      if (isJpeg) {
+        exifText = await readExifText(fullEntryPath);
+      }
+
+      return {
+        name: entry.name,
+        path: entryPath,
+        rawPath,
+        exifText,
+        type,
+      };
+    })
+  );
+
+
+  const breadcrumbs = buildBreadcrumbs(normalizedRelativePath);
+
+  const filteredContent = onlyImages
+    ? content.filter(item => item.type === 'image' || item.type === 'directory')
+    : content;
+
+  return {
+    breadcrumbs,
+    content: filteredContent,
+  };
 }
+

@@ -1,6 +1,5 @@
-export type FsItem = {
-    name: string;
-    path: string;
-    type: 'file' | 'directory';
-    isImage: boolean;
+import type { DirItem } from './api.ts';
+
+export type DirItemWithIndex = DirItem & {
+  index?: number;
 };

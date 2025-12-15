@@ -3,45 +3,45 @@ import sharp from 'sharp';
 import { resolveSafePath } from '../utils/safePath.js';
 import { getFromCache, saveToCache } from './imageCache.js';
 
-export async function createPreviewStream(root: string, relativePath: string) {
-    const fullPath = resolveSafePath(root, relativePath);
-
-    return sharp(fullPath)
-      .rotate();
-}
 
 export async function createFileStream(root: string, relativePath: string) {
-    const fullPath = resolveSafePath(root, relativePath);
-    return fs.createReadStream(fullPath);
+  const fullPath = resolveSafePath(root, relativePath);
+  return fs.createReadStream(fullPath);
 }
 
-const VIEW_SIZE = 400;
+const previewSizes = {
+  small: 400,
+  big: 2560,
+}
 
 export async function createPreviewViewImage(
-    root: string,
-    relativePath: string
+  root: string,
+  { relativePath, size }: { relativePath: string, size: 'small' | 'big' },
 ): Promise<Buffer> {
-    const fullPath = resolveSafePath(root, relativePath);
+  const fullPath = resolveSafePath(root, relativePath);
 
-    const cacheKey = `${fullPath}::view-${VIEW_SIZE}`;
+  const sizePx = previewSizes[size];
 
-    const cached = getFromCache(cacheKey);
-    if (cached) {
-        return cached;
-    }
+  const cacheKey = `${fullPath}::view-${sizePx}`;
 
-    const buffer = await sharp(fullPath)
-        .rotate()
-        .resize({
-            width: VIEW_SIZE,
-            height: VIEW_SIZE,
-            fit: 'inside',
-            withoutEnlargement: true,
-        })
-        .jpeg({ quality: 80 })
-        .toBuffer();
+  const cached = getFromCache(cacheKey);
+  if (cached) {
+    return cached;
+  }
 
-    saveToCache(cacheKey, buffer);
+  const buffer = await sharp(fullPath)
+    .rotate()
+    .resize({
+      width: sizePx,
+      height: sizePx,
+      fit: 'inside',
+      withoutEnlargement: true,
+    })
+    .withMetadata()
+    .jpeg({ quality: size === 'small' ? 80 : 85 })
+    .toBuffer();
 
-    return buffer;
+  saveToCache(cacheKey, buffer);
+
+  return buffer;
 }
