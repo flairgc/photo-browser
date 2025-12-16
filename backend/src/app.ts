@@ -4,7 +4,7 @@ import fsRoutes from './routes/fs.routes.js';
 import imageRoutes from './routes/image.routes.js';
 
 export function buildApp() {
-    const app = Fastify({ logger: true });
+    const app = Fastify({ logger: process.env.NODE_ENV !== 'production' });
 
     app.decorate('config', env);
 

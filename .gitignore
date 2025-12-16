@@ -12,5 +12,6 @@ node_modules
 # back
 /backend/node_modules
 /backend/build
+/backend/dist
 /backend/.idea
 /backend/.env

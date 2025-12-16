@@ -8,10 +8,7 @@ import { navigate, usePathname } from '@/lib/navigation/navigation.ts';
 import type { DirItemWithIndex } from '@/types/fs.ts';
 import HomeIcon from '@/assets/home.svg?react';
 import ImageIcon from '@/assets/image.svg?react';
-
 import styles from './App.module.css';
-
-
 
 
 function splitAndSort(items: DirItem[]): {

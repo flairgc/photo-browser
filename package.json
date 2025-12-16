@@ -11,12 +11,14 @@
   "devDependencies": {
     "@types/node": "^22.14.1",
     "concurrently": "^8.0.0",
+    "cross-env": "^10.1.0",
     "prettier": "^3.5.3"
   },
   "type": "module",
   "scripts": {
     "dev": "concurrently \"npm:dev:backend\" \"npm:dev:frontend\"",
     "dev:backend": "npm --workspace=backend run dev",
-    "dev:frontend": "npm --workspace=frontend run dev"
+    "dev:frontend": "npm --workspace=frontend run dev",
+    "start": "concurrently \"npm run preview --workspace frontend\" \"npm run start:prod --workspace backend\""
   }
 }

@@ -7,7 +7,7 @@
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
-    "lint": "eslint . --ext .ts"
+    "start:prod": "npm run build && cross-env NODE_ENV=production node dist/index.js"
   },
   "dependencies": {
     "dotenv": "^16.4.5",
