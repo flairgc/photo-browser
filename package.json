@@ -1,5 +1,5 @@
 {
-  "name": "kinoclub",
+  "name": "photo-browser",
   "private": true,
   "workspaces": [
     "frontend",
@@ -17,7 +17,6 @@
   "scripts": {
     "dev": "concurrently \"npm:dev:backend\" \"npm:dev:frontend\"",
     "dev:backend": "npm --workspace=backend run dev",
-    "dev:frontend": "npm --workspace=frontend run dev",
-    "db:reset": "npm run prepare:env && npm --workspace=backend run resetdb"
+    "dev:frontend": "npm --workspace=frontend run dev"
   }
 }
