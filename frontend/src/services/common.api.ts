@@ -1,5 +1,5 @@
 import { api } from "./api.ts";
-import type { DirResponse } from '../types/api.ts';
+import type { DirResponse } from '@/types/api.ts';
 
 
 export const fetchDir = async (path = '', isOnlyImages: boolean) => {

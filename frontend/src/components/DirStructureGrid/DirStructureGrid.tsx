@@ -6,11 +6,11 @@ import {
   type PropsWithChildren,
   type Ref, type Dispatch,
 } from 'react';
-import type { DirItemWithIndex } from '../../types/fs.ts';
-import { navigate } from '../../lib/navigation/navigation.ts';
+import type { DirItemWithIndex } from '@/types/fs.ts';
+import { navigate } from '@/lib/navigation/navigation.ts';
 
 import styles from './DirStructureGrid.module.css';
-import { ParentSize } from '../../lib/parent-size/ParentSize.tsx';
+import { ParentSize } from '@/lib/parent-size/ParentSize.tsx';
 
 
 type GridDivProps = PropsWithChildren<{
