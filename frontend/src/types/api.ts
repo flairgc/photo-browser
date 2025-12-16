@@ -5,7 +5,6 @@ export interface DirItem {
   path: string;
   rawPath: string | null;
   type: DirItemType;
-  exifText: string | null;
 }
 
 export interface Breadcrumb {

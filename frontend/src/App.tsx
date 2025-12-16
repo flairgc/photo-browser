@@ -12,7 +12,7 @@ import Download from "yet-another-react-lightbox/plugins/download";
 import "yet-another-react-lightbox/styles.css";
 import "yet-another-react-lightbox/plugins/captions.css";
 
-import { fetchDir } from './services/common.api.ts';
+import { fetchDir, fetchExif } from './services/common.api.ts';
 import type { DirItem, DirResponse } from './types/api.ts';
 import { DirStructureGrid } from './components/DirStructureGrid/DirStructureGrid.tsx';
 import { navigate, usePathname } from './lib/navigation/navigation.ts';
@@ -34,7 +34,7 @@ declare module "yet-another-react-lightbox" {
   }
   interface SlideImage {
     rawUrl: string | null;
-    exifText: string | null;
+    filePath: string | null;
     previewUrl: string | null;
   }
 }
@@ -70,7 +70,6 @@ const DownloadRawButton = () => {
 const OpenPreviwButton = () => {
   const { currentSlide } = useLightboxState();
 
-
   const previewUrl = currentSlide?.previewUrl;
 
   // todo допилить если download это объект
@@ -78,14 +77,6 @@ const OpenPreviwButton = () => {
 
   const handleClick = () => {
     window.open(previewUrl, '_blank');
-
-    // const a = document.createElement('a');
-    // a.href = previewUrl;
-    // a.target = '_blank';      // 👈 ключевой момент
-    // a.rel = 'noopener';
-    // document.body.appendChild(a);
-    // a.click();
-    // document.body.removeChild(a);
   }
 
   return (
@@ -99,21 +90,29 @@ const OpenPreviwButton = () => {
 };
 
 const InfoButton = () => {
+
+  const [isLoading, setIsLoading] = useState(false);
+
   const { currentSlide } = useLightboxState();
 
-  const exifText = currentSlide?.exifText;
+  const filePath = currentSlide?.filePath;
 
-  if (!exifText) return null;
+  if (!filePath) return null;
 
-  const handleClick = () => {
-    alert(exifText);
+
+  const handleClick = async () => {
+    if (isLoading) return;
+    setIsLoading(true);
+    const exif = await fetchExif(filePath);
+    setIsLoading(false)
+    alert(exif);
   }
 
   return (
     <IconButton
       label="Info button"
       icon={InfoIcon}
-      disabled={!currentSlide}
+      disabled={!currentSlide || isLoading}
       onClick={handleClick}
     />
   );
@@ -236,7 +235,7 @@ export function App() {
           title: item.name,
           download: `api/image/file?path=${item.path}`,
           rawUrl: item.rawPath ? `/api/image/file?path=${encodeURIComponent(item.rawPath)}` : null,
-          exifText: item.exifText,
+          filePath: item.path,
           previewUrl: `api/image/file?path=${item.path}&preview`,
         }))}
         carousel={{

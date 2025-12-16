@@ -1,14 +1,12 @@
 import fs from 'fs/promises';
 // import path from 'path';
 import { resolveSafePath } from '../utils/safePath.js';
-import { readExifText } from '../utils/readExifText.js';
 
 export interface FsItem {
   name: string;
   path: string;
   type: 'file' | 'directory' | 'image';
   rawPath: string | null;
-  exifText: string | null;
 }
 
 export interface Breadcrumb {
@@ -64,11 +62,6 @@ export async function getDirectoryStructure(
         ? `${normalizedRelativePath}/${entry.name}`
         : entry.name;
 
-      const fullEntryPath = resolveSafePath(root, entryPath);
-
-      const isJpeg =
-        entry.isFile() && /\.(jpe?g)$/i.test(entry.name);
-
       const isImage =
         entry.isFile() && /\.(jpe?g|png|webp|gif)$/i.test(entry.name);
 
@@ -76,7 +69,6 @@ export async function getDirectoryStructure(
         entry.isDirectory() ? 'directory' : isImage ? 'image' : 'file';
 
       let rawPath: string | null = null;
-      let exifText: string | null = null;
 
       if (isImage) {
         const baseName = entry.name.replace(/\.[^.]+$/, '');
@@ -89,15 +81,10 @@ export async function getDirectoryStructure(
         }
       }
 
-      if (isJpeg) {
-        exifText = await readExifText(fullEntryPath);
-      }
-
       return {
         name: entry.name,
         path: entryPath,
         rawPath,
-        exifText,
         type,
       };
     })

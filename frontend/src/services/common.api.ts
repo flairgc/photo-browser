@@ -12,3 +12,13 @@ export const fetchDir = async (path = '', isOnlyImages: boolean) => {
 
   return resp.data;
 }
+
+export const fetchExif = async (path = '') => {
+   const resp = await api.get<string>('/fs/exif', {
+        params: {
+          path,
+        },
+    });
+
+  return resp.data;
+}
