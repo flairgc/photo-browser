@@ -16,15 +16,14 @@ const previewSizes = {
 
 export async function createPreviewViewImage(
   root: string,
-  { relativePath, size }: { relativePath: string, size: 'small' | 'big' },
+  { relativePath, size }: { relativePath: string; size: 'small' | 'big' },
 ): Promise<Buffer> {
   const fullPath = resolveSafePath(root, relativePath);
 
   const sizePx = previewSizes[size];
-
   const cacheKey = `${fullPath}::view-${sizePx}`;
 
-  const cached = getFromCache(cacheKey);
+  const cached = await getFromCache(cacheKey);
   if (cached) {
     return cached;
   }
@@ -41,7 +40,7 @@ export async function createPreviewViewImage(
     .jpeg({ quality: size === 'small' ? 80 : 85 })
     .toBuffer();
 
-  saveToCache(cacheKey, buffer);
+  await saveToCache(cacheKey, buffer);
 
   return buffer;
 }
