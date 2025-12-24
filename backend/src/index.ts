@@ -2,7 +2,7 @@ import { buildApp } from './app.js';
 
 const app = buildApp();
 
-console.log('app.config', app.config)
+console.log('Backend app.config', app.config)
 
 const start = async () => {
     try {

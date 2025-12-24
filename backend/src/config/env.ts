@@ -1,5 +1,10 @@
 import 'dotenv/config';
+import dotenv from 'dotenv';
 import path from 'path';
+
+dotenv.config({
+  path: path.resolve(process.cwd(), '../.env'),
+});
 
 function requireEnv(name: string): string {
     const value = process.env[name];
@@ -12,9 +17,9 @@ function requireEnv(name: string): string {
 }
 
 export const env = {
-    PORT: Number(process.env.PORT ?? 3001),
+    PORT: Number(process.env.BACKEND_PORT ?? 3001),
 
     FS_ROOT: path.resolve(
-        requireEnv('FS_ROOT')
+        requireEnv('BACKEND_FS_ROOT')
     ),
 } as const;

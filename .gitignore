@@ -7,11 +7,9 @@ node_modules
 /frontend/build
 /frontend/dist
 /frontend/.idea
-/frontend/.env.local
 
 # back
 /backend/node_modules
 /backend/build
 /backend/dist
 /backend/.idea
-/backend/.env

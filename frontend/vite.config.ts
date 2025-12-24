@@ -5,14 +5,19 @@ import path from 'path';
 
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
-  const env = loadEnv(mode, process.cwd(), '')
+  const env = loadEnv(mode, path.resolve(__dirname, '..'), '');
+
+  const url = new URL(env.VITE_BACKEND_API_HOST);
+  if (env.BACKEND_PORT) url.port = env.BACKEND_PORT;
+
+  const proxyTarget = url.toString();
 
   return {
     plugins: [react(), svgr()],
     server: {
       proxy: {
         '/api': {
-          target: env.VITE_BACKEND_API_HOST,
+          target: proxyTarget,
           changeOrigin: true,
           secure: false,
         },
