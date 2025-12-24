@@ -167,7 +167,7 @@ export function PhotoViewer({images, imageIndexToOpen, setImageIndexToOpen, swit
           finite: true,
           preload: 2,
         }}
-        controller={{ closeOnPullDown: true, closeOnBackdropClick: true }}
+        controller={{ closeOnPullDown: true, closeOnPullUp: true, closeOnBackdropClick: true }}
         animation={{ fade: 100, swipe: 150 }}
         toolbar={{
           buttons: [
