@@ -18,7 +18,6 @@ export async function getFromCache(key: string): Promise<Buffer | undefined> {
     await ensureCacheDir();
 
     const filePath = getCacheFilePath(key);
-    console.log('filePath', filePath)
     return await fs.readFile(filePath);
   } catch {
     return undefined;

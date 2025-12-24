@@ -2,7 +2,6 @@ import { type Dispatch, type SetStateAction, useState } from 'react';
 import {
   Lightbox,
   IconButton,
-  // createIcon,
   useLightboxState,
 } from "yet-another-react-lightbox";
 import Fullscreen from "yet-another-react-lightbox/plugins/fullscreen";
@@ -17,6 +16,7 @@ import type { DirItemWithIndex } from '@/types/fs.ts';
 import AlmazIcon from '@/assets/almaz.svg?react';
 import EyeIcon from '@/assets/eye.svg?react';
 import InfoIcon from '@/assets/info.svg?react';
+import { FullSizeToolbarIcon } from '@/components/PhotoViewer/svg-lib.tsx';
 
 
 
@@ -25,11 +25,14 @@ declare module "yet-another-react-lightbox" {
     "Raw button"?: string;
     "Open file button"?: string;
     "Info button"?: string;
+    "FullSize button"?: string;
   }
   interface SlideImage {
+    name: string;
     rawUrl: string | null;
     filePath: string | null;
     previewUrl: string | null;
+    fullSize?: boolean;
   }
 }
 
@@ -112,14 +115,38 @@ const InfoButton = () => {
   );
 };
 
+const FullSizeButton = ({makeFullSize}: {makeFullSize: (name: string)=> void, }) => {
+
+  const { currentSlide } = useLightboxState();
+  const fullSize = currentSlide?.fullSize;
+  const name = currentSlide?.name;
+
+
+  const handleClick = async () => {
+    if (name) {
+      makeFullSize(name)
+    }
+  }
+
+  return (
+    <IconButton
+      label="FullSize button"
+      icon={FullSizeToolbarIcon}
+      disabled={fullSize}
+      onClick={handleClick}
+    />
+  );
+};
+
 
 type Props = {
   images: DirItemWithIndex[];
   imageIndexToOpen: number | undefined;
   setImageIndexToOpen: Dispatch<SetStateAction<number | undefined>>;
+  switchPhotoFullSize: (name: string) => void;
 }
 
-export function PhotoViewer({images, imageIndexToOpen, setImageIndexToOpen }: Props) {
+export function PhotoViewer({images, imageIndexToOpen, setImageIndexToOpen, switchPhotoFullSize }: Props) {
 
   return (
       <Lightbox
@@ -127,12 +154,14 @@ export function PhotoViewer({images, imageIndexToOpen, setImageIndexToOpen }: Pr
         close={() => setImageIndexToOpen(undefined)}
         index={imageIndexToOpen}
         slides={images.map((item) => ({
-          src: `api/image/preview?path=${item.path}&size=big`,
+          src: item.fullSize ? `api/image/file?path=${item.path}&preview` : `api/image/preview?path=${item.path}&size=big`,
           title: item.name,
+          name: item.name,
           download: `api/image/file?path=${item.path}`,
           rawUrl: item.rawPath ? `/api/image/file?path=${encodeURIComponent(item.rawPath)}` : null,
           filePath: item.path,
           previewUrl: `api/image/file?path=${item.path}&preview`,
+          fullSize: item.fullSize
         }))}
         carousel={{
           finite: true,
@@ -141,7 +170,12 @@ export function PhotoViewer({images, imageIndexToOpen, setImageIndexToOpen }: Pr
         controller={{ closeOnPullDown: true, closeOnBackdropClick: true }}
         animation={{ fade: 100, swipe: 150 }}
         toolbar={{
-          buttons: [ <InfoButton key="open-preview-button" />, <OpenPreviwButton key="open-preview-button" />, <DownloadRawButton key="raw-button" />, "close"],
+          buttons: [
+            <InfoButton key="open-preview-button" />,
+            <OpenPreviwButton key="open-preview-button" />,
+            <FullSizeButton key="test-button" makeFullSize={switchPhotoFullSize}/>,
+            <DownloadRawButton key="raw-button" />,
+            "close"],
         }}
         plugins={[Fullscreen, Zoom, Captions, Download]}
       />

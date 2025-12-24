@@ -84,6 +84,24 @@ export function App() {
 
   const images = rest.filter(i => i.type === 'image');
 
+  const switchPhotoFullSize = (name: string) => {
+    const index = images.findIndex(i => i.name === name);
+    setImageIndexToOpen(index);
+    setCurrentDir((prev) => {
+      if (!prev) return prev;
+
+      return {
+        ...prev,
+        content: prev.content.map((item) =>
+          item.name === name
+            ? { ...item, fullSize: true }
+            : item
+        ),
+      };
+    });
+  };
+
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
       <header className={styles.header}>
@@ -122,6 +140,7 @@ export function App() {
         images={images}
         imageIndexToOpen={imageIndexToOpen}
         setImageIndexToOpen={setImageIndexToOpen}
+        switchPhotoFullSize={switchPhotoFullSize}
       />
 
     </div>
