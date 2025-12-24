@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 
 import { PhotoViewer } from '@/components/PhotoViewer/PhotoViewer.tsx';
-import { fetchDir } from '@/services/common.api.ts';
+import { downloadTestZip, fetchDir } from '@/services/common.api.ts';
 import type { DirItem, DirResponse } from '@/types/api.ts';
 import { DirStructureGrid } from '@/components/DirStructureGrid/DirStructureGrid.tsx';
 import { navigate, usePathname } from '@/lib/navigation/navigation.ts';
@@ -122,6 +122,9 @@ export function App() {
         </nav>
 
         <div>
+          <button onClick={downloadTestZip}>
+            Скачать ZIP
+          </button>
           <button className={styles.btn} style={{backgroundColor: isOnlyImages ? '#E5E7EB' : undefined}} title="Только изображения" onClick={() => setIsOnlyImages((f) => !f)}>
             <ImageIcon />
           </button>

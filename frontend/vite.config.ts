@@ -8,7 +8,7 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, path.resolve(__dirname, '..'), '');
 
   const url = new URL(env.VITE_BACKEND_API_HOST);
-  if (env.BACKEND_PORT) url.port = env.BACKEND_PORT;
+  if (env.BACKEND_PORT) url.port = process.env.NODE_ENV === 'production' ? env.BACKEND_PORT : env.BACKEND_PORT_DEV;
 
   const proxyTarget = url.toString();
 

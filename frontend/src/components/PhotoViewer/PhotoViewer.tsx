@@ -16,7 +16,7 @@ import type { DirItemWithIndex } from '@/types/fs.ts';
 import AlmazIcon from '@/assets/almaz.svg?react';
 import EyeIcon from '@/assets/eye.svg?react';
 import InfoIcon from '@/assets/info.svg?react';
-import { FullSizeToolbarIcon } from '@/components/PhotoViewer/svg-lib.tsx';
+import { FullSizeIcon } from '@/components/PhotoViewer/svg-lib.tsx';
 
 
 
@@ -47,7 +47,7 @@ const DownloadRawButton = () => {
   const handleClick = () => {
     const a = document.createElement('a');
     a.href = rawUrl;
-    a.target = '_blank';      // 👈 ключевой момент
+    a.target = '_blank';
     a.rel = 'noopener';
     document.body.appendChild(a);
     a.click();
@@ -131,7 +131,7 @@ const FullSizeButton = ({makeFullSize}: {makeFullSize: (name: string)=> void, })
   return (
     <IconButton
       label="FullSize button"
-      icon={FullSizeToolbarIcon}
+      icon={(props) => <FullSizeIcon {...props} size={20}/>}
       disabled={fullSize}
       onClick={handleClick}
     />

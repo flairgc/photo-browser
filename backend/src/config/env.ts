@@ -17,11 +17,11 @@ function requireEnv(name: string): string {
   return value;
 }
 
-const FS_ROOT_ENV = process.env.NODE_ENV === 'production' ? requireEnv('BACKEND_FS_ROOT') : requireEnv('BACKEND_FS_ROOT_DEV')
+const FS_ROOT_ENV = process.env.NODE_ENV === 'production' ? requireEnv('BACKEND_FS_ROOT') : requireEnv('BACKEND_FS_ROOT_DEV');
+const PORT = process.env.NODE_ENV === 'production' ? Number(requireEnv('BACKEND_PORT')) : Number(requireEnv('BACKEND_PORT_DEV'));
 
 export const env = {
-  PORT: Number(process.env.BACKEND_PORT ?? 3001),
-
+  PORT,
   FS_ROOT: path.resolve(
     FS_ROOT_ENV,
   ),
