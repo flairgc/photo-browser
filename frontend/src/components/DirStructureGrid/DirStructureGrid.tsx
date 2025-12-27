@@ -91,7 +91,6 @@ type Props = {
 
 export const DirStructureGrid = ({items, setImageIndexToOpen}: Props) => {
 
-  //
   return (
     <ParentSize>
       {({ height }) => (

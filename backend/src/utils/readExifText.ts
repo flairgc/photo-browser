@@ -38,6 +38,7 @@ export async function readExifText(
     const camera = `${make} ${model}`;
 
     const focal = data.Photo?.FocalLength;
+    const lens = data.Photo?.LensModel;
     const aperture = data.Photo?.FNumber;
     const shutter = data.Photo?.ExposureTime;
     const iso = data.Photo?.ISOSpeedRatings;
@@ -52,7 +53,9 @@ export async function readExifText(
     parts.push('\n');
 
     if (camera) parts.push(`${camera}`);
+    parts.push('\n');
     if (focal) parts.push(`${focal}mm`);
+    if (lens) parts.push(`(${lens.trim()})`);
     parts.push('\n');
     if (aperture) parts.push(`f/${aperture}`);
     if (shutter) {

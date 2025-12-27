@@ -14,7 +14,7 @@ export const fetchDir = async (path = '', isOnlyImages: boolean) => {
 }
 
 export const fetchExif = async (path = '') => {
-   const resp = await api.get<string>('/fs/exif', {
+   const resp = await api.get<string>('/image/exif', {
         params: {
           path,
         },
