@@ -4,13 +4,14 @@ import {
   type CSSProperties,
   type HTMLAttributes,
   type PropsWithChildren,
-  type Ref, type Dispatch,
+  type Ref,
 } from 'react';
 import type { DirItemWithIndex } from '@/types/fs.ts';
-import { navigate } from '@/lib/navigation/navigation.ts';
+// import { navigate } from '@/lib/navigation/navigation.ts';
 
 import styles from './DirStructureGrid.module.css';
 import { ParentSize } from '@/lib/parent-size/ParentSize.tsx';
+import { useLocation } from 'wouter';
 
 
 type GridDivProps = PropsWithChildren<{
@@ -86,10 +87,11 @@ const gridComponents: GridComponents = {
 
 type Props = {
   items: DirItemWithIndex[];
-  setImageIndexToOpen: Dispatch<React.SetStateAction<number | undefined>>;
+  setImageIndexToOpen: (index: number | undefined) => void;
 }
 
 export const DirStructureGrid = ({items, setImageIndexToOpen}: Props) => {
+  const [,navigate] = useLocation();
 
   return (
     <ParentSize>
@@ -120,6 +122,7 @@ export const DirStructureGrid = ({items, setImageIndexToOpen}: Props) => {
                 key={item.name}
                 className={styles.item}
                 onClick={() => {
+                  // if (item.type === 'directory') navigate(item.path);
                   if (item.type === 'directory') navigate(item.path);
                   if (item.type === 'image') setImageIndexToOpen(item.index);
                   if (item.type === 'file') {
@@ -135,7 +138,7 @@ export const DirStructureGrid = ({items, setImageIndexToOpen}: Props) => {
                 {item.type === 'image' ? (
                   <img
                     className={styles.preview}
-                    src={`api/image/preview?path=${item.path}&size=small`}
+                    src={`/api/image/preview?path=${item.path}&size=small`}
                     alt={item.name}
                   />
                 ) : (

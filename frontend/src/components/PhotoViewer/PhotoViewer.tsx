@@ -1,4 +1,4 @@
-import { type Dispatch, type SetStateAction, useState } from 'react';
+import { useState } from 'react';
 import {
   Lightbox,
   IconButton,
@@ -136,13 +136,14 @@ const FullSizeButton = ({makeFullSize}: {makeFullSize: (name: string)=> void, })
       onClick={handleClick}
     />
   );
-};
+}
+
 
 
 type Props = {
   images: DirItemWithIndex[];
   imageIndexToOpen: number | undefined;
-  setImageIndexToOpen: Dispatch<SetStateAction<number | undefined>>;
+  setImageIndexToOpen: (index: number | undefined) => void;
   switchPhotoFullSize: (name: string) => void;
 }
 
@@ -153,14 +154,15 @@ export function PhotoViewer({images, imageIndexToOpen, setImageIndexToOpen, swit
         open={imageIndexToOpen !== undefined}
         close={() => setImageIndexToOpen(undefined)}
         index={imageIndexToOpen}
+        on={{ view: ({ index: currentIndex }) => setImageIndexToOpen(currentIndex) }}
         slides={images.map((item) => ({
-          src: item.fullSize ? `api/image/file?path=${item.path}&preview` : `api/image/preview?path=${item.path}&size=big`,
+          src: item.fullSize ? `/api/image/file?path=${item.path}&preview` : `/api/image/preview?path=${item.path}&size=big`,
           title: item.name,
           name: item.name,
-          download: `api/image/file?path=${item.path}`,
+          download: `/api/image/file?path=${item.path}`,
           rawUrl: item.rawPath ? `/api/image/file?path=${encodeURIComponent(item.rawPath)}` : null,
           filePath: item.path,
-          previewUrl: `api/image/file?path=${item.path}&preview`,
+          previewUrl: `/api/image/file?path=${item.path}&preview`,
           fullSize: item.fullSize
         }))}
         carousel={{

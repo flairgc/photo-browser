@@ -1,14 +1,15 @@
 import { useEffect, useState } from 'react';
 
 import { PhotoViewer } from '@/components/PhotoViewer/PhotoViewer.tsx';
-import { downloadTestZip, fetchDir } from '@/services/common.api.ts';
+import { /*downloadTestZip,*/ fetchDir } from '@/services/common.api.ts';
 import type { DirItem, DirResponse } from '@/types/api.ts';
 import { DirStructureGrid } from '@/components/DirStructureGrid/DirStructureGrid.tsx';
-import { navigate, usePathname } from '@/lib/navigation/navigation.ts';
+// import { navigate, usePathname } from '@/lib/navigation/navigation.ts';
 import type { DirItemWithIndex } from '@/types/fs.ts';
 import HomeIcon from '@/assets/home.svg?react';
 import ImageIcon from '@/assets/image.svg?react';
 import styles from './App.module.css';
+import { useLocation, useSearchParams } from 'wouter';
 
 
 function splitAndSort(items: DirItem[]): {
@@ -49,12 +50,28 @@ function splitAndSort(items: DirItem[]): {
   };
 }
 
+const previewIndexName = 'previewIndex';
 
 export function App() {
 
-  const currentPath = usePathname();
+  const [currentPath, navigate] = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const previewIndex = searchParams.get(previewIndexName);
+  const imageIndexToOpen: number | undefined = previewIndex ? Number(previewIndex) : undefined;
+  const setImageIndexToOpen = (index: number | undefined ) => {
+    setSearchParams((prev) => {
+      if (index === undefined) {
+        prev.delete(previewIndexName);
+      } else {
+        prev.set(previewIndexName, String(index));
+      }
+      return prev;
+    });
+  }
+
   const [currentDir, setCurrentDir] = useState<DirResponse>();
-  const [imageIndexToOpen, setImageIndexToOpen] = useState<number | undefined>();
+  // const [imageIndexToOpen, setImageIndexToOpen] = useState<number | undefined>();
 
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -62,22 +79,13 @@ export function App() {
   const [isOnlyImages, setIsOnlyImages] = useState(true);
 
   useEffect(() => {
-    fetchDir(currentPath, isOnlyImages).then((data) => {
+    fetchDir(currentPath.replace(/^\//, ''), isOnlyImages).then((data) => {
       setCurrentDir(data);
     }).catch(error => {
       setErrorMessage(error?.response?.data?.message || `Error fetchDir ${currentPath}`);
     })
   }, [currentPath, isOnlyImages]);
 
-  useEffect(() => {
-    const urlPath = '/' + encodeURIComponent(currentPath);
-
-    window.history.pushState(
-      { path: currentPath },
-      '',
-      urlPath
-    );
-  }, [currentPath]);
 
   const { directories, rest } = splitAndSort(currentDir?.content || []);
   const sortedItems = [...directories, ...rest];
@@ -122,9 +130,9 @@ export function App() {
         </nav>
 
         <div>
-          <button onClick={downloadTestZip}>
-            Скачать ZIP
-          </button>
+          {/*<button onClick={downloadTestZip}>*/}
+          {/*  Скачать ZIP*/}
+          {/*</button>*/}
           <button className={styles.btn} style={{backgroundColor: isOnlyImages ? '#E5E7EB' : undefined}} title="Только изображения" onClick={() => setIsOnlyImages((f) => !f)}>
             <ImageIcon />
           </button>
