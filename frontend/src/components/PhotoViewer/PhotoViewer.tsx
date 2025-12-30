@@ -139,7 +139,6 @@ const FullSizeButton = ({makeFullSize}: {makeFullSize: (name: string)=> void, })
 }
 
 
-
 type Props = {
   images: DirItemWithIndex[];
   imageIndexToOpen: number | undefined;
@@ -173,7 +172,7 @@ export function PhotoViewer({images, imageIndexToOpen, setImageIndexToOpen, swit
         animation={{ fade: 100, swipe: 150 }}
         toolbar={{
           buttons: [
-            <InfoButton key="open-preview-button" />,
+            <InfoButton key="open-info-button" />,
             <OpenPreviwButton key="open-preview-button" />,
             <FullSizeButton key="test-button" makeFullSize={switchPhotoFullSize}/>,
             <DownloadRawButton key="raw-button" />,

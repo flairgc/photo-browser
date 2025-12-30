@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 
 import { PhotoViewer } from '@/components/PhotoViewer/PhotoViewer.tsx';
 import { /*downloadTestZip,*/ fetchDir } from '@/services/common.api.ts';
@@ -59,12 +59,19 @@ export function App() {
 
   const previewIndex = searchParams.get(previewIndexName);
   const imageIndexToOpen: number | undefined = previewIndex ? Number(previewIndex) : undefined;
-  const setImageIndexToOpen = (index: number | undefined ) => {
+  const setImageIndexToOpen = (newIndex: number | undefined ) => {
+
+    const currentPreviewIndex = searchParams.get(previewIndexName);
+
+    if (currentPreviewIndex === null && newIndex === undefined) return;
+    if (currentPreviewIndex === String(newIndex)) return;
+
     setSearchParams((prev) => {
-      if (index === undefined) {
+
+      if (newIndex === undefined) {
         prev.delete(previewIndexName);
       } else {
-        prev.set(previewIndexName, String(index));
+        prev.set(previewIndexName, String(newIndex));
       }
       return prev;
     });
@@ -79,11 +86,29 @@ export function App() {
   const [isOnlyImages, setIsOnlyImages] = useState(true);
 
   useEffect(() => {
-    fetchDir(currentPath.replace(/^\//, ''), isOnlyImages).then((data) => {
-      setCurrentDir(data);
-    }).catch(error => {
-      setErrorMessage(error?.response?.data?.message || `Error fetchDir ${currentPath}`);
-    })
+    const controller = new AbortController();
+
+    fetchDir(
+      currentPath.replace(/^\//, ''),
+      isOnlyImages,
+      controller.signal,
+    )
+      .then((data) => {
+        setCurrentDir(data);
+      })
+      .catch((error) => {
+        // axios при abort кидает специальную ошибку — её игнорируем
+        if (error.name === 'CanceledError') return;
+
+        setErrorMessage(
+          error?.response?.data?.message ||
+          `Error fetchDir ${currentPath}`,
+        );
+      });
+
+    return () => {
+      controller.abort();
+    };
   }, [currentPath, isOnlyImages]);
 
 
@@ -93,8 +118,6 @@ export function App() {
   const images = rest.filter(i => i.type === 'image');
 
   const switchPhotoFullSize = (name: string) => {
-    const index = images.findIndex(i => i.name === name);
-    setImageIndexToOpen(index);
     setCurrentDir((prev) => {
       if (!prev) return prev;
 
@@ -113,18 +136,18 @@ export function App() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
       <header className={styles.header}>
-        <button className={styles.btn} title="Домой" onClick={() => navigate('')}>
+        <button className={styles.btn} title="Домой" onClick={() => navigate('/')}>
           <HomeIcon />
         </button>
 
         <nav className={styles.breadcrumbs}>
-          <span className={styles.anchor} onClick={() => navigate('')}>Главная</span>
+          <span className={styles.anchor} onClick={() => navigate('/')}>Главная</span>
           {currentDir?.breadcrumbs.map((item) => {
             return (
-              <>
+              <Fragment key={item.path}>
                 <span className={styles.breadcrumbsSlash}>/</span>
                 <span className={styles.anchor} onClick={() => navigate(item.path)}>{item.name}</span>
-              </>
+              </Fragment>
           )
           })}
         </nav>

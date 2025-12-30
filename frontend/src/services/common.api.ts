@@ -2,23 +2,28 @@ import { api } from "./api.ts";
 import type { DirResponse } from '@/types/api.ts';
 
 
-export const fetchDir = async (path = '', isOnlyImages: boolean) => {
-   const resp = await api.get<DirResponse>('/fs/dir', {
-        params: {
-          path,
-          onlyImages: isOnlyImages ? 'true' : undefined,
-        },
-    });
+export const fetchDir = async (
+  path = '',
+  isOnlyImages: boolean,
+  signal?: AbortSignal,
+) => {
+  const resp = await api.get<DirResponse>('/fs/dir', {
+    params: {
+      path,
+      onlyImages: isOnlyImages ? 'true' : undefined,
+    },
+    signal,
+  });
 
   return resp.data;
-}
+};
 
 export const fetchExif = async (path = '') => {
-   const resp = await api.get<string>('/image/exif', {
-        params: {
-          path,
-        },
-    });
+  const resp = await api.get<string>('/image/exif', {
+    params: {
+      path,
+    },
+  });
 
   return resp.data;
 }
