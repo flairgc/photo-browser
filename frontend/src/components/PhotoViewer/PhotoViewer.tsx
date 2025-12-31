@@ -151,8 +151,14 @@ export function PhotoViewer({images, imageIndexToOpen, setImageIndexToOpen, swit
   return (
       <Lightbox
         open={imageIndexToOpen !== undefined}
-        close={() => setImageIndexToOpen(undefined)}
+        close={() => history.back()}
         index={imageIndexToOpen}
+        carousel={{
+          finite: true,
+          preload: 2,
+        }}
+        controller={{ closeOnPullDown: true, closeOnPullUp: true, closeOnBackdropClick: false }}
+        animation={{ fade: 100, swipe: 150 }}
         on={{ view: ({ index: currentIndex }) => setImageIndexToOpen(currentIndex) }}
         slides={images.map((item) => ({
           src: item.fullSize ? `/api/image/file?path=${item.path}&preview` : `/api/image/preview?path=${item.path}&size=big`,
@@ -164,12 +170,6 @@ export function PhotoViewer({images, imageIndexToOpen, setImageIndexToOpen, swit
           previewUrl: `/api/image/file?path=${item.path}&preview`,
           fullSize: item.fullSize
         }))}
-        carousel={{
-          finite: true,
-          preload: 2,
-        }}
-        controller={{ closeOnPullDown: true, closeOnPullUp: true, closeOnBackdropClick: true }}
-        animation={{ fade: 100, swipe: 150 }}
         toolbar={{
           buttons: [
             <InfoButton key="open-info-button" />,

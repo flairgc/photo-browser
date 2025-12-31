@@ -146,7 +146,7 @@ export function App() {
             return (
               <Fragment key={item.path}>
                 <span className={styles.breadcrumbsSlash}>/</span>
-                <span className={styles.anchor} onClick={() => navigate(item.path)}>{item.name}</span>
+                <span className={styles.anchor} onClick={() => navigate('/' + item.path)}>{item.name}</span>
               </Fragment>
           )
           })}

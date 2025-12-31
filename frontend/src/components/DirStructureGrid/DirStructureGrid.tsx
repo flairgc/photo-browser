@@ -8,6 +8,7 @@ import {
 } from 'react';
 import type { DirItemWithIndex } from '@/types/fs.ts';
 // import { navigate } from '@/lib/navigation/navigation.ts';
+import CheckBoxIcon from '@/assets/check-box.svg?react';
 
 import styles from './DirStructureGrid.module.css';
 import { ParentSize } from '@/lib/parent-size/ParentSize.tsx';
@@ -123,7 +124,8 @@ export const DirStructureGrid = ({items, setImageIndexToOpen}: Props) => {
                 className={styles.item}
                 onClick={() => {
                   // if (item.type === 'directory') navigate(item.path);
-                  if (item.type === 'directory') navigate(item.path);
+                  console.log('item.path', item.path)
+                  if (item.type === 'directory') navigate('/' + item.path);
                   if (item.type === 'image') setImageIndexToOpen(item.index);
                   if (item.type === 'file') {
                     const a = document.createElement('a');
@@ -158,6 +160,15 @@ export const DirStructureGrid = ({items, setImageIndexToOpen}: Props) => {
                   </div>
                 )}
                 <div className={styles.name}>{item.name}</div>
+                {item.type === 'image' && (
+                  <div className={styles.checkbox} onClick={(event) => {
+                    event.stopPropagation();
+                    console.log('item.name', item.name)
+                  }}>
+                    {/*<div>*/}
+                      <CheckBoxIcon className={styles.checkboxIcon} />
+                    {/*</div>*/}
+                  </div>)}
               </div>
             </div>
           )
