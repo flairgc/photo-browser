@@ -1,11 +1,11 @@
 import { Fragment, useEffect, useState } from 'react';
 
 import { PhotoViewer } from '@/components/PhotoViewer/PhotoViewer.tsx';
-import { /*downloadTestZip,*/ fetchDir } from '@/services/common.api.ts';
-import type { DirItem, DirResponse } from '@/types/api.ts';
+import { downloadZip, fetchDir } from '@/services/common.api.ts';
+import type { BreadcrumbDto, DirItemDto } from '@/types/api.ts';
 import { DirStructureGrid } from '@/components/DirStructureGrid/DirStructureGrid.tsx';
 // import { navigate, usePathname } from '@/lib/navigation/navigation.ts';
-import type { DirItemWithIndex } from '@/types/fs.ts';
+import type { DirItem } from '@/types/fs.ts';
 import HomeIcon from '@/assets/home.svg?react';
 import ImageIcon from '@/assets/image.svg?react';
 import styles from './App.module.css';
@@ -13,40 +13,23 @@ import { useLocation, useSearchParams } from 'wouter';
 
 
 function splitAndSort(items: DirItem[]): {
-  directories: DirItemWithIndex[];
-  rest: DirItemWithIndex[];
+  directories: DirItem[];
+  rest: DirItem[];
 } {
   // 1. Разделяем
   const directories = items.filter(i => i.type === 'directory');
   const rest = items.filter(i => i.type !== 'directory');
 
   // 2. Сортируем по имени (немутирующе)
-  const sortByName = (a: DirItem, b: DirItem) =>
+  const sortByName = (a: DirItemDto, b: DirItemDto) =>
     a.name.localeCompare(b.name, 'ru', { sensitivity: 'base' });
 
   const sortedDirs = [...directories].sort(sortByName);
   const sortedRest = [...rest].sort(sortByName);
 
-  // 3. Добавляем index только изображениям
-  let imageIndex = 0;
-
-  const restWithIndex: DirItemWithIndex[] = sortedRest.map(item => {
-    if (item.type === 'image') {
-      return {
-        ...item,
-        index: imageIndex++,
-      };
-    }
-
-    return {
-      ...item,
-      index: undefined,
-    };
-  });
-
   return {
     directories: sortedDirs.map(d => ({ ...d, index: undefined })),
-    rest: restWithIndex,
+    rest: sortedRest,
   };
 }
 
@@ -59,7 +42,7 @@ export function App() {
 
   const previewIndex = searchParams.get(previewIndexName);
   const imageIndexToOpen: number | undefined = previewIndex ? Number(previewIndex) : undefined;
-  const setImageIndexToOpen = (newIndex: number | undefined ) => {
+  const setImageIndexToOpen = (newIndex: number) => {
 
     const currentPreviewIndex = searchParams.get(previewIndexName);
 
@@ -77,8 +60,12 @@ export function App() {
     });
   }
 
-  const [currentDir, setCurrentDir] = useState<DirResponse>();
+  // const [currentDir, setCurrentDir] = useState<DirResponse>();
+  const [breadcrumbs, setBreadcrumbs] = useState<BreadcrumbDto[]>([]);
+  const [dirItems, setDirItems] = useState<DirItem[]>([]);
   // const [imageIndexToOpen, setImageIndexToOpen] = useState<number | undefined>();
+  const selectedDirItem = dirItems.filter(({isSelected}) => isSelected);
+  const isSelectMode = selectedDirItem.length > 0;
 
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -94,7 +81,27 @@ export function App() {
       controller.signal,
     )
       .then((data) => {
-        setCurrentDir(data);
+
+        setBreadcrumbs(data.breadcrumbs)
+
+        let imageIndex = 0;
+
+        const itemsIndexed: DirItem[] = data.content.map(item => {
+          if (item.type === 'image') {
+            return {
+              ...item,
+              index: imageIndex++,
+            };
+          }
+
+          return {
+            ...item,
+            index: undefined,
+          };
+        });
+        setDirItems(itemsIndexed)
+
+        // setCurrentDir(data);
       })
       .catch((error) => {
         // axios при abort кидает специальную ошибку — её игнорируем
@@ -112,23 +119,41 @@ export function App() {
   }, [currentPath, isOnlyImages]);
 
 
-  const { directories, rest } = splitAndSort(currentDir?.content || []);
+  const { directories, rest } = splitAndSort(dirItems);
   const sortedItems = [...directories, ...rest];
 
   const images = rest.filter(i => i.type === 'image');
 
   const switchPhotoFullSize = (name: string) => {
-    setCurrentDir((prev) => {
+    setDirItems((prev) => {
       if (!prev) return prev;
 
-      return {
-        ...prev,
-        content: prev.content.map((item) =>
+      return prev.map((item) =>
           item.name === name
             ? { ...item, fullSize: true }
             : item
-        ),
-      };
+        )
+    });
+  };
+
+  const selectItem = (name: string, flag?: boolean) => {
+    setDirItems((prev) => {
+      if (!prev) return prev;
+
+      return prev.map((item) =>
+        item.name === name
+          ? { ...item, isSelected: flag === undefined ? !item.isSelected : flag }
+          : item
+      )
+    });
+  };
+
+  const deselectItems = () => {
+    setDirItems((prev) => {
+      if (!prev) return prev;
+
+      return prev.map((item) => ({ ...item, isSelected: false })
+      )
     });
   };
 
@@ -136,37 +161,53 @@ export function App() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
       <header className={styles.header}>
-        <button className={styles.btn} title="Домой" onClick={() => navigate('/')}>
-          <HomeIcon />
-        </button>
-
-        <nav className={styles.breadcrumbs}>
-          <span className={styles.anchor} onClick={() => navigate('/')}>Главная</span>
-          {currentDir?.breadcrumbs.map((item) => {
-            return (
-              <Fragment key={item.path}>
-                <span className={styles.breadcrumbsSlash}>/</span>
-                <span className={styles.anchor} onClick={() => navigate('/' + item.path)}>{item.name}</span>
-              </Fragment>
-          )
-          })}
-        </nav>
-
-        <div>
-          {/*<button onClick={downloadTestZip}>*/}
-          {/*  Скачать ZIP*/}
-          {/*</button>*/}
-          <button className={styles.btn} style={{backgroundColor: isOnlyImages ? '#E5E7EB' : undefined}} title="Только изображения" onClick={() => setIsOnlyImages((f) => !f)}>
-            <ImageIcon />
+        <div className={styles.wrapper}>
+          <button className={styles.btn} title="Домой" onClick={() => navigate('/')}>
+            <HomeIcon />
           </button>
+
+          <nav className={styles.breadcrumbs}>
+            <span className={styles.anchor} onClick={() => navigate('/')}>Главная</span>
+            {breadcrumbs.map((item) => {
+              return (
+                <Fragment key={item.path}>
+                  <span className={styles.breadcrumbsSlash}>/</span>
+                  <span className={styles.anchor} onClick={() => navigate('/' + item.path)}>{item.name}</span>
+                </Fragment>
+            )
+            })}
+          </nav>
+
+          <div>
+            <button className={styles.btn} style={{backgroundColor: isOnlyImages ? '#E5E7EB' : undefined}} title="Только изображения" onClick={() => setIsOnlyImages((f) => !f)}>
+              <ImageIcon />
+            </button>
+          </div>
         </div>
+        {selectedDirItem.length > 0 ?
+          <div className={styles.selectPanelWrapper}>
+            <div className={styles.selectPanel}>
+              <div className={styles.selectPanelTitle}>Выбрано фото: {selectedDirItem.length}</div>
+              <div className={styles.selectPanelButtons}>
+                <button onClick={deselectItems}>X Снять выделение</button>
+                <button onClick={() => downloadZip(selectedDirItem.map((item) => item.path))}>Скачать</button>
+                <button onClick={() => downloadZip(selectedDirItem.map((item) => item.path), {raw: true})}>Скачать RAW</button>
+              </div>
+            </div>
+          </div>
+          : null
+        }
       </header>
 
       <main className={styles.container}>
         {errorMessage && <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>{errorMessage}</div>}
 
-         <DirStructureGrid items={sortedItems} setImageIndexToOpen={setImageIndexToOpen}/>
-
+         <DirStructureGrid
+           items={sortedItems}
+           setImageIndexToOpen={setImageIndexToOpen}
+           selectItem={selectItem}
+           isSelectMode={isSelectMode}
+         />
 
       </main>
 
@@ -175,6 +216,7 @@ export function App() {
         imageIndexToOpen={imageIndexToOpen}
         setImageIndexToOpen={setImageIndexToOpen}
         switchPhotoFullSize={switchPhotoFullSize}
+        selectItem={selectItem}
       />
 
     </div>

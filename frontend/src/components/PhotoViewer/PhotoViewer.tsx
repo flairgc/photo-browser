@@ -12,18 +12,19 @@ import "yet-another-react-lightbox/styles.css";
 import "yet-another-react-lightbox/plugins/captions.css";
 
 import { fetchExif } from '@/services/common.api.ts';
-import type { DirItemWithIndex } from '@/types/fs.ts';
+import type { DirItem } from '@/types/fs.ts';
 import AlmazIcon from '@/assets/almaz.svg?react';
-import EyeIcon from '@/assets/eye.svg?react';
+// import EyeIcon from '@/assets/eye.svg?react';
 import InfoIcon from '@/assets/info.svg?react';
-import { FullSizeIcon } from '@/components/PhotoViewer/svg-lib.tsx';
+import { CheckBoxIcon, CheckedIcon, FullSizeIcon } from '@/components/PhotoViewer/svg-lib.tsx';
 
 
 
 declare module "yet-another-react-lightbox" {
   interface Labels {
+    "Checkbox button"?: string;
     "Raw button"?: string;
-    "Open file button"?: string;
+    // "Open file button"?: string;
     "Info button"?: string;
     "FullSize button"?: string;
   }
@@ -33,8 +34,35 @@ declare module "yet-another-react-lightbox" {
     filePath: string | null;
     previewUrl: string | null;
     fullSize?: boolean;
+    isSelected?: boolean;
   }
 }
+
+
+const CheckBoxButton = ({selectItem}: {
+  selectItem: (name: string, flag?: boolean) => void;
+}) => {
+  const { currentSlide } = useLightboxState();
+
+  const name = currentSlide?.name;
+  const isSelected = currentSlide?.isSelected;
+
+  // todo допилить если download это объект
+  if (!name) return null;
+
+  const handleClick = () => {
+    selectItem(name)
+  }
+
+  return (
+    <IconButton
+      label="Checkbox button"
+      icon={isSelected ? CheckedIcon : CheckBoxIcon}
+      disabled={!currentSlide}
+      onClick={handleClick}
+    />
+  );
+};
 
 const DownloadRawButton = () => {
   const { currentSlide } = useLightboxState();
@@ -64,27 +92,27 @@ const DownloadRawButton = () => {
   );
 };
 
-const OpenPreviwButton = () => {
-  const { currentSlide } = useLightboxState();
-
-  const previewUrl = currentSlide?.previewUrl;
-
-  // todo допилить если download это объект
-  if (!previewUrl) return null;
-
-  const handleClick = () => {
-    window.open(previewUrl, '_blank');
-  }
-
-  return (
-    <IconButton
-      label="Open file button"
-      icon={EyeIcon}
-      disabled={!currentSlide}
-      onClick={handleClick}
-    />
-  );
-};
+// const OpenPreviewButton = () => {
+//   const { currentSlide } = useLightboxState();
+//
+//   const previewUrl = currentSlide?.previewUrl;
+//
+//   // todo допилить если download это объект
+//   if (!previewUrl) return null;
+//
+//   const handleClick = () => {
+//     window.open(previewUrl, '_blank');
+//   }
+//
+//   return (
+//     <IconButton
+//       label="Open file button"
+//       icon={EyeIcon}
+//       disabled={!currentSlide}
+//       onClick={handleClick}
+//     />
+//   );
+// };
 
 const InfoButton = () => {
 
@@ -140,13 +168,14 @@ const FullSizeButton = ({makeFullSize}: {makeFullSize: (name: string)=> void, })
 
 
 type Props = {
-  images: DirItemWithIndex[];
+  images: DirItem[];
   imageIndexToOpen: number | undefined;
-  setImageIndexToOpen: (index: number | undefined) => void;
+  setImageIndexToOpen: (index: number) => void;
   switchPhotoFullSize: (name: string) => void;
+  selectItem: (name: string, flag?: boolean) => void;
 }
 
-export function PhotoViewer({images, imageIndexToOpen, setImageIndexToOpen, switchPhotoFullSize }: Props) {
+export function PhotoViewer({images, imageIndexToOpen, setImageIndexToOpen, switchPhotoFullSize, selectItem }: Props) {
 
   return (
       <Lightbox
@@ -168,12 +197,14 @@ export function PhotoViewer({images, imageIndexToOpen, setImageIndexToOpen, swit
           rawUrl: item.rawPath ? `/api/image/file?path=${encodeURIComponent(item.rawPath)}` : null,
           filePath: item.path,
           previewUrl: `/api/image/file?path=${item.path}&preview`,
-          fullSize: item.fullSize
+          fullSize: item.fullSize,
+          isSelected: item.isSelected,
         }))}
         toolbar={{
           buttons: [
+            <CheckBoxButton key="checkbox-button" selectItem={selectItem}/>,
             <InfoButton key="open-info-button" />,
-            <OpenPreviwButton key="open-preview-button" />,
+            // <OpenPreviewButton key="open-preview-button" />,
             <FullSizeButton key="test-button" makeFullSize={switchPhotoFullSize}/>,
             <DownloadRawButton key="raw-button" />,
             "close"],

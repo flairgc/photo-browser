@@ -1,6 +1,6 @@
-import {
-  createIcon,
-} from "yet-another-react-lightbox";
+// import {
+//   createIcon,
+// } from "yet-another-react-lightbox";
 import { type JSX, type ReactNode, type SVGProps } from 'react';
 
 
@@ -42,11 +42,19 @@ const getIconComponent = (svg: JSX.Element) => (props: IconWrapProps) => (
 const FullSizeInsidesSVG = <path d="M14 22H6.8M6.8 22C5.11984 22 4.27976 22 3.63803 21.673C3.07354 21.3854 2.6146 20.9265 2.32698 20.362C2 19.7202 2 18.8802 2 17.2M6.8 22H7.2C8.88016 22 9.72024 22 10.362 21.673C10.9265 21.3854 11.3854 20.9265 11.673 20.362C12 19.7202 12 18.8802 12 17.2V16.8C12 15.1198 12 14.2798 11.673 13.638C11.3854 13.0735 10.9265 12.6146 10.362 12.327C9.72024 12 8.88016 12 7.2 12H6.8C5.11984 12 4.27976 12 3.63803 12.327C3.07354 12.6146 2.6146 13.0735 2.32698 13.638C2 14.2798 2 15.1198 2 16.8V17.2M2 17.2V10M10 2H14M22 10V14M18 22C18.93 22 19.395 22 19.7765 21.8978C20.8117 21.6204 21.6204 20.8117 21.8978 19.7765C22 19.395 22 18.93 22 18M22 6C22 5.07003 22 4.60504 21.8978 4.22354C21.6204 3.18827 20.8117 2.37962 19.7765 2.10222C19.395 2 18.93 2 18 2M6 2C5.07003 2 4.60504 2 4.22354 2.10222C3.18827 2.37962 2.37962 3.18827 2.10222 4.22354C2 4.60504 2 5.07003 2 6"
                                  stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"></path>;
 
+const CheckBoxInsidesSVG = <path fillRule="evenodd" clipRule="evenodd" d="M6 5C5.44772 5 5 5.44772 5 6V13V18C5 18.5523 5.44772 19 6 19H18C18.5523 19 19 18.5523 19 18V13V6C19 5.44772 18.5523 5 18 5H6ZM3 6C3 4.34315 4.34315 3 6 3H18C19.6569 3 21 4.34315 21 6V13V18C21 19.6569 19.6569 21 18 21H6C4.34315 21 3 19.6569 3 18V13V6Z"
+                                         fill="currentColor" />;
+
+const CheckedInsidesSVG = <path d="M8 12L11 15L16 9M4 16.8002V7.2002C4 6.08009 4 5.51962 4.21799 5.0918C4.40973 4.71547 4.71547 4.40973 5.0918 4.21799C5.51962 4 6.08009 4 7.2002 4H16.8002C17.9203 4 18.4796 4 18.9074 4.21799C19.2837 4.40973 19.5905 4.71547 19.7822 5.0918C20 5.5192 20 6.07899 20 7.19691V16.8036C20 17.9215 20 18.4805 19.7822 18.9079C19.5905 19.2842 19.2837 19.5905 18.9074 19.7822C18.48 20 17.921 20 16.8031 20H7.19691C6.07899 20 5.5192 20 5.0918 19.7822C4.71547 19.5905 4.40973 19.2842 4.21799 18.9079C4 18.4801 4 17.9203 4 16.8002Z"
+                                stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />;
+
 
 // иконки тулбара
-export const FullSizeToolbarIcon = createIcon("FullSizeToolbarIcon", (
-  FullSizeInsidesSVG
-));
+// export const FullSizeToolbarIcon = createIcon("FullSizeToolbarIcon", (
+//   FullSizeInsidesSVG
+// ));
 
 // общие иконки
 export const FullSizeIcon = getIconComponent(FullSizeInsidesSVG);
+export const CheckBoxIcon = getIconComponent(CheckBoxInsidesSVG);
+export const CheckedIcon = getIconComponent(CheckedInsidesSVG);

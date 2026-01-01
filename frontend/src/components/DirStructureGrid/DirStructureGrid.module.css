@@ -13,6 +13,12 @@
     display: flex;
     flex-direction: column;
     justify-content: space-between;
+
+    -webkit-touch-callout: none; /* Safari / Chrome Android */
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent; /* убирает серую вспышку */
+    touch-action: manipulation;
 }
 
 .item:hover {
@@ -40,27 +46,30 @@
     padding: 8px;
     background: rgba(0, 0, 0, 0.1);
     border-radius: 8px;
-    color: rgba(0, 0, 0, 0.4);
+    color: rgba(255, 255, 255, 0.4);
 }
 
 .item:hover .checkbox {
     opacity: 1;
 }
 
-.checkbox:hover {
+.checkbox:hover, .checkActive {
     opacity: 1;
     background: rgba(0, 0, 0, 0.2);
-    color: rgba(0, 0, 0, 1);
+    color: rgb(255, 255, 255, 0.8);
 }
 
 
 /* ===== Image ===== */
 
-.preview {
+.previewImg {
     width: 100%;
     aspect-ratio: 1 / 1;
     object-fit: cover;
     border-top-left-radius: var(--radius);
     border-top-right-radius: var(--radius);
     margin-bottom: 8px;
+
+    -webkit-touch-callout: none;
+    pointer-events: none;
 }

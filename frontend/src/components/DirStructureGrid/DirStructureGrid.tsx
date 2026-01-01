@@ -6,13 +6,14 @@ import {
   type PropsWithChildren,
   type Ref,
 } from 'react';
-import type { DirItemWithIndex } from '@/types/fs.ts';
-// import { navigate } from '@/lib/navigation/navigation.ts';
-import CheckBoxIcon from '@/assets/check-box.svg?react';
-
-import styles from './DirStructureGrid.module.css';
-import { ParentSize } from '@/lib/parent-size/ParentSize.tsx';
 import { useLocation } from 'wouter';
+// import { useLongPress } from '@siberiacancode/reactuse';
+
+import type { DirItem } from '@/types/fs.ts';
+import { ParentSize } from '@/lib/parent-size/ParentSize.tsx';
+import { CheckBoxIcon, CheckedIcon } from '@/components/PhotoViewer/svg-lib.tsx';
+import styles from './DirStructureGrid.module.css';
+import { useLongPress } from '@/lib/useLongPress/useLongPress.tsx';
 
 
 type GridDivProps = PropsWithChildren<{
@@ -86,13 +87,110 @@ const gridComponents: GridComponents = {
 // };
 
 
-type Props = {
-  items: DirItemWithIndex[];
-  setImageIndexToOpen: (index: number | undefined) => void;
+type ItemContentProps = {
+  index: number;
+  items: DirItem[];
+  setImageIndexToOpen: (index: number) => void;
+  selectItem: (name: string, flag?: boolean) => void;
+  isSelectMode: boolean;
 }
 
-export const DirStructureGrid = ({items, setImageIndexToOpen}: Props) => {
+const ItemContent = ({index, items, setImageIndexToOpen, selectItem, isSelectMode}: ItemContentProps) => {
   const [,navigate] = useLocation();
+
+  const item = items[index];
+
+  const longPress = useLongPress(() => {
+    selectItem(item.name);
+  });
+
+  const isImage = item.type === 'image';
+
+
+  return (
+    <div
+      style={{
+        display: 'flex',
+        flex: 1,
+        textAlign: 'center',
+        // whiteSpace: 'nowrap',
+        width: 150,
+        // padding: 5,
+        // height: 180,
+      }}
+    >
+      <div
+        key={item.name}
+        className={styles.item}
+        onTouchStart={isImage ? longPress.onTouchStart : undefined}
+        onTouchEnd={isImage ? longPress.onTouchEnd : undefined}
+        onTouchMove={isImage ? longPress.onTouchMove : undefined}
+        onTouchCancel={isImage ? longPress.onTouchCancel : undefined}
+        onContextMenu={isImage ? (e) => e.preventDefault() : undefined}
+        onClick={() => {
+          if (longPress.shouldIgnoreClick()) return;
+
+          if (item.type === 'directory') navigate('/' + item.path);
+          if (isImage && item.index !== undefined) setImageIndexToOpen(item.index);
+          if (item.type === 'file') {
+            const a = document.createElement('a');
+            a.href = `/api/image/file?path=${encodeURIComponent(item.path)}`;
+            a.download = '';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+          }
+        }}
+      >
+        {isImage ? (
+          <img
+            className={styles.previewImg}
+            src={`/api/image/preview?path=${item.path}&size=small`}
+            alt={item.name}
+          />
+        ) : (
+          <div className="icon" onClick={() => {
+
+          }}>
+            {item.type === 'directory' ? (
+              <svg viewBox="0 0 24 24" fill="#fbbf24">
+                <path d="M10 4l2 2h8a2 2 0 012 2v10a2 2 0 01-2 2H4a2 2 0 01-2-2V6a2 2 0 012-2h6z"/>
+              </svg>
+            ) : (
+              <svg viewBox="0 0 24 24" fill="#60a5fa">
+                <path d="M6 2h9l5 5v15a2 2 0 01-2 2H6a2 2 0 01-2-2V4a2 2 0 012-2z"/>
+              </svg>
+            )}
+
+          </div>
+        )}
+        <div className={styles.name}>{item.name}</div>
+        {isImage && (
+          <div className={`${styles.checkbox} ${item.isSelected || isSelectMode ? styles.checkActive : ''}`} onClick={(event) => {
+            event.stopPropagation();
+            selectItem(item.name)
+          }}>
+            {/*<div>*/}
+            { item.isSelected ? <CheckedIcon /> : <CheckBoxIcon /> }
+            {/*</div>*/}
+          </div>)}
+      </div>
+    </div>
+  )
+};
+
+
+type Props = {
+  items: DirItem[];
+  setImageIndexToOpen: (index: number) => void;
+  selectItem: (name: string, flag?: boolean) => void;
+  isSelectMode: boolean;
+}
+
+export const DirStructureGrid = ({items, setImageIndexToOpen, selectItem, isSelectMode}: Props) => {
+
+  // const { ref, pressed } = useLongPress<HTMLDivElement>(() => console.log('callback'));
+  // console.log('pressed', pressed)
 
   return (
     <ParentSize>
@@ -103,74 +201,14 @@ export const DirStructureGrid = ({items, setImageIndexToOpen}: Props) => {
         components={gridComponents}
         increaseViewportBy={1000}
         itemContent={(index: number) => {
-          // return <ItemWrapper>Item {index}</ItemWrapper>;
-
-          const item = items[index];
-
           return (
-            <div
-              style={{
-                display: 'flex',
-                flex: 1,
-                textAlign: 'center',
-                // whiteSpace: 'nowrap',
-                width: 150,
-                // padding: 5,
-                // height: 180,
-              }}
-            >
-              <div
-                key={item.name}
-                className={styles.item}
-                onClick={() => {
-                  // if (item.type === 'directory') navigate(item.path);
-                  console.log('item.path', item.path)
-                  if (item.type === 'directory') navigate('/' + item.path);
-                  if (item.type === 'image') setImageIndexToOpen(item.index);
-                  if (item.type === 'file') {
-                    const a = document.createElement('a');
-                    a.href = `/api/image/file?path=${encodeURIComponent(item.path)}`;
-                    a.download = '';
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                  }
-                }}
-              >
-                {item.type === 'image' ? (
-                  <img
-                    className={styles.preview}
-                    src={`/api/image/preview?path=${item.path}&size=small`}
-                    alt={item.name}
-                  />
-                ) : (
-                  <div className="icon" onClick={() => {
-
-                  }}>
-                    {item.type === 'directory' ? (
-                      <svg viewBox="0 0 24 24" fill="#fbbf24">
-                        <path d="M10 4l2 2h8a2 2 0 012 2v10a2 2 0 01-2 2H4a2 2 0 01-2-2V6a2 2 0 012-2h6z"/>
-                      </svg>
-                    ) : (
-                      <svg viewBox="0 0 24 24" fill="#60a5fa">
-                        <path d="M6 2h9l5 5v15a2 2 0 01-2 2H6a2 2 0 01-2-2V4a2 2 0 012-2z"/>
-                      </svg>
-                    )}
-
-                  </div>
-                )}
-                <div className={styles.name}>{item.name}</div>
-                {item.type === 'image' && (
-                  <div className={styles.checkbox} onClick={(event) => {
-                    event.stopPropagation();
-                    console.log('item.name', item.name)
-                  }}>
-                    {/*<div>*/}
-                      <CheckBoxIcon className={styles.checkboxIcon} />
-                    {/*</div>*/}
-                  </div>)}
-              </div>
-            </div>
+            <ItemContent
+              index={index}
+              items={items}
+              setImageIndexToOpen={setImageIndexToOpen}
+              selectItem={selectItem}
+              isSelectMode={isSelectMode}
+            />
           )
         }}
       />

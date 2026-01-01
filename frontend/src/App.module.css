@@ -12,14 +12,53 @@
 /* ===== Header ===== */
 
 .header {
+    /*display: flex;*/
+    /*justify-content: space-between;*/
+    /*align-items: center;*/
+    /*gap: 16px;*/
+    /*!*height: 56px;*!*/
+    /*!*padding: 0 20px;*!*/
+    /*background: var(--card);*/
+    /*border-bottom: 1px solid var(--border);*/
+    position: relative;
+    background: var(--card);
+    border-bottom: 1px solid var(--border);
+}
+
+.wrapper {
     display: flex;
     justify-content: space-between;
     align-items: center;
     gap: 16px;
-    height: 56px;
-    padding: 0 20px;
-    background: var(--card);
-    border-bottom: 1px solid var(--border);
+    /*height: 56px;*/
+    padding: 8px 20px;
+}
+
+.selectPanelWrapper {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    background-color: #58baea;
+}
+
+.selectPanel {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    height: 100%;
+    padding: 8px 20px;
+    color: white;
+}
+
+.selectPanelTitle {
+}
+
+.selectPanelButtons {
+    display: flex;
+    gap: 16px;
 }
 
 .btn {
