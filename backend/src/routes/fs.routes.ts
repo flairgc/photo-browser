@@ -58,9 +58,11 @@ export default async function fsRoutes(fastify: FastifyInstance) {
       if (!stat.isFile()) continue;
 
       // --- основной файл ---
-      archive.file(fullPath, {
-        name: path.basename(relativePath),
-      });
+      if (!raw) {
+        archive.file(fullPath, {
+          name: path.basename(relativePath),
+        });
+      }
 
       // --- RAW файл ---
       if (raw) {
