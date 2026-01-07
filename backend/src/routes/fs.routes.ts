@@ -14,77 +14,67 @@ export default async function fsRoutes(fastify: FastifyInstance) {
   });
 
   fastify.post('/zip', async (request, reply) => {
-    const body = request.body as {
-      paths?: string[];
-      raw?: boolean;
-    };
+    const body = request.body as any;
 
-    if (!body?.paths || !Array.isArray(body.paths) || body.paths.length === 0) {
+    const paths =
+      typeof body.paths === 'string'
+        ? JSON.parse(body.paths)
+        : body.paths;
+
+    const raw = body.raw === 'true';
+
+    if (!Array.isArray(paths) || paths.length === 0) {
       return reply.code(400).send({ error: 'paths array is required' });
     }
 
-    const { paths, raw } = body;
-
     const firstPath = paths[0];
     const archiveName = path.basename(path.dirname(firstPath)) || 'files';
+
+    console.log('firstPath', firstPath)
+    console.log('archiveName', archiveName)
 
     reply
       .header('Content-Type', 'application/zip')
       .header(
         'Content-Disposition',
-        `attachment; filename="${archiveName}.zip"`,
+        // `attachment; filename="${archiveName}.zip"`,
+        `attachment; filename="test.zip"`,
       );
 
-    const archive = archiver('zip', {
-      zlib: { level: 9 },
-    });
+    const archive = archiver('zip', { zlib: { level: 9 } });
 
     archive.on('error', (err) => {
       fastify.log.error(err);
       reply.raw.destroy(err);
     });
 
+    // archive.on('end', () => {
+    //   reply.raw.end();
+    // });
+
+    // archive.file('example.txt', { name: 'example.txt' });
     archive.pipe(reply.raw);
 
     for (const relativePath of paths) {
-      const fullPath = resolveSafePath(
-        fastify.config.FS_ROOT,
-        relativePath,
-      );
-
+      const fullPath = resolveSafePath(fastify.config.FS_ROOT, relativePath);
       if (!fs.existsSync(fullPath)) continue;
 
-      const stat = fs.statSync(fullPath);
-      if (!stat.isFile()) continue;
-
-      // --- основной файл ---
       if (!raw) {
-        archive.file(fullPath, {
-          name: path.basename(relativePath),
-        });
-      }
-
-      // --- RAW файл ---
-      if (raw) {
+        archive.file(fullPath, { name: path.basename(relativePath) });
+      } else {
         const dir = path.dirname(relativePath);
-        const ext = path.extname(relativePath);
-        const baseName = path.basename(relativePath, ext);
+        const base = path.basename(relativePath, path.extname(relativePath));
+        const rawPath = path.join(dir, `${base}.ARW`);
+        const rawFull = resolveSafePath(fastify.config.FS_ROOT, rawPath);
 
-        const rawRelativePath = path.join(dir, `${baseName}.ARW`);
-        const rawFullPath = resolveSafePath(
-          fastify.config.FS_ROOT,
-          rawRelativePath,
-        );
-
-        if (fs.existsSync(rawFullPath)) {
-          archive.file(rawFullPath, {
-            name: path.basename(rawRelativePath),
-          });
+        if (fs.existsSync(rawFull)) {
+          archive.file(rawFull, { name: path.basename(rawPath) });
         }
       }
     }
 
     await archive.finalize();
   });
+
 
 }

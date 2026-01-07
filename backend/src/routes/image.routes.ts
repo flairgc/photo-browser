@@ -33,7 +33,7 @@ export default async function imageRoutes(fastify: FastifyInstance) {
           : `attachment; filename="${encodeURIComponent(fileName)}"`,
       );
 
-    return reply.send(stream);
+    reply.send(stream);
   });
 
 

@@ -28,85 +28,27 @@ export const fetchExif = async (path = '') => {
   return resp.data;
 }
 
-function getParentDir(path: string): string | null {
-  const parts = path.split('/').filter(Boolean);
+export function downloadZip(paths: string[], options?: { raw: boolean }) {
+  const form = document.createElement('form');
+  form.method = 'POST';
+  form.action = '/api/fs/zip';
+  form.style.display = 'none';
+  form.target = '_self';
 
-  // Export/test/file.jpg → ['Export', 'test', 'file.jpg']
-  if (parts.length < 2) return null;
+  const pathsInput = document.createElement('input');
+  pathsInput.type = 'hidden';
+  pathsInput.name = 'paths';
+  pathsInput.value = JSON.stringify(paths);
 
-  return parts[parts.length - 2];
-}
+  const rawInput = document.createElement('input');
+  rawInput.type = 'hidden';
+  rawInput.name = 'raw';
+  rawInput.value = options?.raw ? 'true' : '';
 
-//
-// export async function downloadZip(paths: string[], options?: {raw: boolean}) {
-//   const response = await api.post(
-//     '/fs/zip',
-//     { paths, raw: options?.raw },
-//     {
-//       responseType: 'blob',
-//     },
-//   );
-//
-//   const blob = new Blob([response.data], {
-//     type: 'application/zip',
-//   });
-//
-//   const url = window.URL.createObjectURL(blob);
-//
-//   // 👇 имя файла из Content-Disposition
-//   const disposition = response.headers['content-disposition'];
-//   const match = disposition?.match(/filename="?(.+?)"?$/);
-//   const fileName = getParentDir(paths[0]) ?? match?.[1] ?? 'photos.zip';
-//
-//   const a = document.createElement('a');
-//   a.href = url;
-//   a.download = fileName;
-//
-//   document.body.appendChild(a);
-//   a.click();
-//
-//   document.body.removeChild(a);
-//   window.URL.revokeObjectURL(url);
-// }
+  form.appendChild(pathsInput);
+  form.appendChild(rawInput);
 
-export async function downloadZip(
-  paths: string[],
-  options?: { raw: boolean },
-) {
-  const response = await api.post(
-    '/fs/zip',
-    { paths, raw: options?.raw },
-    {
-      responseType: 'blob',
-      onDownloadProgress: (event) => {
-        if (!event.total) {
-          console.info(`Downloaded ${event.loaded} bytes`);
-          return;
-        }
-
-        const percent = Math.round((event.loaded * 100) / event.total);
-        console.info(`Downloading: ${percent}%`);
-      },
-    },
-  );
-
-  const blob = new Blob([response.data], {
-    type: 'application/zip',
-  });
-
-  const url = window.URL.createObjectURL(blob);
-
-  const disposition = response.headers['content-disposition'];
-  const match = disposition?.match(/filename="?(.+?)"?$/);
-  const fileName = getParentDir(paths[0]) ?? match?.[1] ?? 'photos.zip';
-
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = fileName;
-
-  document.body.appendChild(a);
-  a.click();
-
-  document.body.removeChild(a);
-  window.URL.revokeObjectURL(url);
+  document.body.appendChild(form);
+  form.submit();
+  document.body.removeChild(form);
 }

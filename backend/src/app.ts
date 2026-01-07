@@ -1,13 +1,15 @@
 import Fastify from 'fastify';
+import formbody from '@fastify/formbody';
 import { env } from './config/env.js';
 import fsRoutes from './routes/fs.routes.js';
 import imageRoutes from './routes/image.routes.js';
+
 
 export function buildApp() {
     const app = Fastify({ logger: process.env.NODE_ENV !== 'production' });
 
     app.decorate('config', env);
-
+    app.register(formbody);
 
     app.get('/api/hi', async () => {
         return {hello: 'world'};
