@@ -2,7 +2,7 @@ import fs from 'fs/promises';
 import path from 'path';
 import crypto from 'crypto';
 
-const CACHE_DIR = path.resolve(process.cwd(), '.cache');
+export const CACHE_DIR = path.resolve(process.cwd(), '.cache');
 
 async function ensureCacheDir() {
   await fs.mkdir(CACHE_DIR, { recursive: true });

@@ -60,10 +60,8 @@ export function App() {
     });
   }
 
-  // const [currentDir, setCurrentDir] = useState<DirResponse>();
   const [breadcrumbs, setBreadcrumbs] = useState<BreadcrumbDto[]>([]);
   const [dirItems, setDirItems] = useState<DirItem[]>([]);
-  // const [imageIndexToOpen, setImageIndexToOpen] = useState<number | undefined>();
   const selectedDirItem = dirItems.filter(({isSelected}) => isSelected);
   const isSelectMode = selectedDirItem.length > 0;
 
@@ -71,6 +69,8 @@ export function App() {
 
   // filter
   const [isOnlyImages, setIsOnlyImages] = useState(true);
+
+  const [isDonwloadingZip, setIsDonwloadingZip] = useState(false);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -148,14 +148,23 @@ export function App() {
     });
   };
 
-  const deselectItems = () => {
+  const changeSelectAllItems = (flag: boolean) => {
     setDirItems((prev) => {
       if (!prev) return prev;
 
-      return prev.map((item) => ({ ...item, isSelected: false })
+      return prev.map((item) => ({ ...item, isSelected: flag })
       )
     });
   };
+
+  const selectAllItems = () => changeSelectAllItems(true);
+  const deselectItems = () => changeSelectAllItems(false);
+
+  const handleDownloadZip = (raw?: boolean) => {
+    setIsDonwloadingZip(true);
+    downloadZip(selectedDirItem.map((item) => item.path), {raw});
+    setTimeout(() => setIsDonwloadingZip(false), 1000);
+  }
 
 
   return (
@@ -189,9 +198,10 @@ export function App() {
             <div className={styles.selectPanel}>
               <div className={styles.selectPanelTitle}>Выбрано фото: {selectedDirItem.length}</div>
               <div className={styles.selectPanelButtons}>
+                <button onClick={selectAllItems}>Выделить всё</button>
                 <button onClick={deselectItems}>X Снять выделение</button>
-                <button onClick={() => downloadZip(selectedDirItem.map((item) => item.path))}>Скачать</button>
-                <button onClick={() => downloadZip(selectedDirItem.map((item) => item.path), {raw: true})}>Скачать RAW</button>
+                <button onClick={() => handleDownloadZip()} disabled={isDonwloadingZip}>Скачать</button>
+                <button onClick={() => handleDownloadZip(true)} disabled={isDonwloadingZip}>Скачать RAW</button>
               </div>
             </div>
           </div>

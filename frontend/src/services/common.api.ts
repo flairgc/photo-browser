@@ -28,7 +28,7 @@ export const fetchExif = async (path = '') => {
   return resp.data;
 }
 
-export function downloadZip(paths: string[], options?: { raw: boolean }) {
+export function downloadZip(paths: string[], options?: { raw?: boolean }) {
   const form = document.createElement('form');
   form.method = 'POST';
   form.action = '/api/fs/zip';
