@@ -61,6 +61,13 @@
     gap: 16px;
 }
 
+.btn_group {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
 .btn {
     display: inline-flex;
     align-items: center;

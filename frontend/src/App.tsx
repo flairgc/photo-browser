@@ -1,18 +1,22 @@
 import { Fragment, useEffect, useState } from 'react';
+import { useLocation, useSearchParams } from 'wouter';
 
 import { PhotoViewer } from '@/components/PhotoViewer/PhotoViewer.tsx';
 import { downloadZip, fetchDir } from '@/services/common.api.ts';
-import type { BreadcrumbDto, DirItemDto } from '@/types/api.ts';
+import type { BreadcrumbDto } from '@/types/api.ts';
 import { DirStructureGrid } from '@/components/DirStructureGrid/DirStructureGrid.tsx';
-// import { navigate, usePathname } from '@/lib/navigation/navigation.ts';
 import type { DirItem } from '@/types/fs.ts';
 import HomeIcon from '@/assets/home.svg?react';
 import ImageIcon from '@/assets/image.svg?react';
+import SortUpIcon from '@/assets/sort-up.svg?react';
+import SortDownIcon from '@/assets/sort-down.svg?react';
 import styles from './App.module.css';
-import { useLocation, useSearchParams } from 'wouter';
 
 
-function splitAndSort(items: DirItem[]): {
+function splitAndSort(
+  items: DirItem[],
+  sort: 'ASC' | 'DESC' = 'ASC'
+): {
   directories: DirItem[];
   rest: DirItem[];
 } {
@@ -20,45 +24,72 @@ function splitAndSort(items: DirItem[]): {
   const directories = items.filter(i => i.type === 'directory');
   const rest = items.filter(i => i.type !== 'directory');
 
-  // 2. Сортируем по имени (немутирующе)
-  const sortByName = (a: DirItemDto, b: DirItemDto) =>
-    a.name.localeCompare(b.name, 'ru', { sensitivity: 'base' });
+  // 2. Универсальный компаратор
+  const sortByName = (a: DirItem, b: DirItem) => {
+    const result = a.name.localeCompare(b.name, 'ru', {
+      sensitivity: 'base',
+    });
+
+    return sort === 'ASC' ? result : -result;
+  };
 
   const sortedDirs = [...directories].sort(sortByName);
   const sortedRest = [...rest].sort(sortByName);
 
+  let imageIndex = 0;
+
+  const restWithIndexes = sortedRest.map(item => {
+    if (item.type === 'image') {
+      return {
+        ...item,
+        index: imageIndex++,
+      };
+    }
+
+    return {
+      ...item,
+      index: undefined,
+    };
+  });
+
   return {
     directories: sortedDirs.map(d => ({ ...d, index: undefined })),
-    rest: sortedRest,
+    rest: restWithIndexes,
   };
 }
+
 
 const previewIndexName = 'previewIndex';
 
 export function App() {
 
   const [currentPath, navigate] = useLocation();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
 
   const previewIndex = searchParams.get(previewIndexName);
   const imageIndexToOpen: number | undefined = previewIndex ? Number(previewIndex) : undefined;
-  const setImageIndexToOpen = (newIndex: number) => {
 
-    const currentPreviewIndex = searchParams.get(previewIndexName);
+  const setImageIndexToOpen = (newIndex?: number) => {
+    const url = new URL(window.location.href);
+    const hasPreviewNow = url.searchParams.has(previewIndexName);
 
-    if (currentPreviewIndex === null && newIndex === undefined) return;
-    if (currentPreviewIndex === String(newIndex)) return;
+    // ─────── ОТКРЫТИЕ ───────
+    if (newIndex !== undefined && !hasPreviewNow) {
+      url.searchParams.set(previewIndexName, String(newIndex));
 
-    setSearchParams((prev) => {
+      navigate(url.pathname + url.search); // PUSH
+      return;
+    }
 
-      if (newIndex === undefined) {
-        prev.delete(previewIndexName);
-      } else {
-        prev.set(previewIndexName, String(newIndex));
-      }
-      return prev;
-    });
-  }
+    // ─────── ЛИСТАНИЕ / ЗАКРЫТИЕ ───────
+    if (newIndex === undefined) {
+      url.searchParams.delete(previewIndexName);
+    } else {
+      url.searchParams.set(previewIndexName, String(newIndex));
+    }
+
+    navigate(url.pathname + url.search, { replace: true });
+  };
 
   const [breadcrumbs, setBreadcrumbs] = useState<BreadcrumbDto[]>([]);
   const [dirItems, setDirItems] = useState<DirItem[]>([]);
@@ -69,6 +100,8 @@ export function App() {
 
   // filter
   const [isOnlyImages, setIsOnlyImages] = useState(true);
+
+  const [sort, setSort] = useState<'ASC' | 'DESC'>('DESC');
 
   const [isDonwloadingZip, setIsDonwloadingZip] = useState(false);
 
@@ -84,22 +117,7 @@ export function App() {
 
         setBreadcrumbs(data.breadcrumbs)
 
-        let imageIndex = 0;
-
-        const itemsIndexed: DirItem[] = data.content.map(item => {
-          if (item.type === 'image') {
-            return {
-              ...item,
-              index: imageIndex++,
-            };
-          }
-
-          return {
-            ...item,
-            index: undefined,
-          };
-        });
-        setDirItems(itemsIndexed)
+        setDirItems(data.content)
 
         // setCurrentDir(data);
       })
@@ -119,7 +137,7 @@ export function App() {
   }, [currentPath, isOnlyImages]);
 
 
-  const { directories, rest } = splitAndSort(dirItems);
+  const { directories, rest } = splitAndSort(dirItems, sort);
   const sortedItems = [...directories, ...rest];
 
   const images = rest.filter(i => i.type === 'image');
@@ -187,7 +205,10 @@ export function App() {
             })}
           </nav>
 
-          <div>
+          <div className={styles.btn_group}>
+            <button className={styles.btn} title="Сортировка" onClick={() => setSort(sort => sort === 'ASC' ? 'DESC' : 'ASC')}>
+              {sort === 'ASC' ? <SortDownIcon /> : <SortUpIcon />}
+            </button>
             <button className={styles.btn} style={{backgroundColor: isOnlyImages ? '#E5E7EB' : undefined}} title="Только изображения" onClick={() => setIsOnlyImages((f) => !f)}>
               <ImageIcon />
             </button>

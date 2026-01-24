@@ -170,7 +170,7 @@ const FullSizeButton = ({makeFullSize}: {makeFullSize: (name: string)=> void, })
 type Props = {
   images: DirItem[];
   imageIndexToOpen: number | undefined;
-  setImageIndexToOpen: (index: number) => void;
+  setImageIndexToOpen: (index?: number) => void;
   switchPhotoFullSize: (name: string) => void;
   selectItem: (name: string, flag?: boolean) => void;
 }
@@ -180,7 +180,7 @@ export function PhotoViewer({images, imageIndexToOpen, setImageIndexToOpen, swit
   return (
       <Lightbox
         open={imageIndexToOpen !== undefined}
-        close={() => history.back()}
+        close={() => setImageIndexToOpen(undefined)}
         index={imageIndexToOpen}
         carousel={{
           finite: true,
