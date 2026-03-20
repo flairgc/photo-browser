@@ -1,9 +1,9 @@
 .lightbox :global(.yarl__navigation_prev),
 .lightbox :global(.yarl__navigation_next) {
+    /* toolbar size */
     top: 62px;
     bottom: 0;
     transform: none;
-    /*transform: translateY(-31px);*/
     padding: 24px;
 }
 

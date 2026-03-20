@@ -1,5 +1,5 @@
 import { deviceType } from '@/helpers/ui-helper.ts';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { clsx } from 'clsx';
 import {
   Lightbox,
@@ -10,6 +10,8 @@ import Fullscreen from "yet-another-react-lightbox/plugins/fullscreen";
 import Zoom from "yet-another-react-lightbox/plugins/zoom";
 import Captions from "yet-another-react-lightbox/plugins/captions";
 import Download from "yet-another-react-lightbox/plugins/download";
+import { createModule, MODULE_TOOLBAR } from "yet-another-react-lightbox";
+import type { PluginProps } from "yet-another-react-lightbox";
 import "yet-another-react-lightbox/styles.css";
 import "yet-another-react-lightbox/plugins/captions.css";
 import styles from "./PhotoViewer.module.css";
@@ -20,6 +22,57 @@ import AlmazIcon from '@/assets/almaz.svg?react';
 // import EyeIcon from '@/assets/eye.svg?react';
 import InfoIcon from '@/assets/info.svg?react';
 import { CheckBoxIcon, CheckedIcon, FullSizeIcon } from '@/components/PhotoViewer/svg-lib.tsx';
+
+
+const TOOLBAR_HEIGHT = 62;
+
+
+function MyComponent({ showExif }: any) {
+
+  const [isLoading, setIsLoading] = useState(false);
+  const [exif, setExif] = useState('');
+
+  const { currentSlide } = useLightboxState();
+
+  const filePath = currentSlide?.filePath;
+
+  if (!filePath) return null;
+
+  useEffect(() => {
+      if (!showExif) return;
+      setIsLoading(true);
+      fetchExif(filePath).then((exif) => {
+        setExif(exif);
+      }).finally(() => {
+        setIsLoading(false);
+      });
+  }, [filePath, showExif]);
+
+  return showExif ? (
+    <div style={{
+      position: 'absolute',
+      top: TOOLBAR_HEIGHT,
+      right: 0,
+      backgroundColor: 'rgba(0, 0, 0, 0.8)',
+      color: 'white',
+      padding: 16,
+    }}>
+      {isLoading ? (
+        <span> Загрузка exif...</span>
+      ) : (
+        exif
+          ? <span style={{ whiteSpace: 'pre-line' }}>{exif}</span>
+          : <span>Отсутствует или не удалось загрузить Exif</span>
+      )}
+    </div>
+  ) : null;
+}
+
+const MyModule = createModule("MyModule", MyComponent);
+
+function MyPlugin({ addSibling }: PluginProps) {
+  addSibling(MODULE_TOOLBAR, MyModule, false);
+}
 
 
 
@@ -40,6 +93,9 @@ declare module "yet-another-react-lightbox" {
     previewUrl: string | null;
     fullSize?: boolean;
     isSelected?: boolean;
+  }
+  interface LightboxProps {
+    showExif?: boolean;
   }
 }
 
@@ -119,9 +175,9 @@ const DownloadRawButton = () => {
 //   );
 // };
 
-const InfoButton = () => {
+const InfoButton = ({onToggle}: {onToggle: () => void}) => {
 
-  const [isLoading, setIsLoading] = useState(false);
+  // const [isLoading, setIsLoading] = useState(false);
 
   const { currentSlide } = useLightboxState();
 
@@ -131,18 +187,19 @@ const InfoButton = () => {
 
 
   const handleClick = async () => {
-    if (isLoading) return;
-    setIsLoading(true);
-    const exif = await fetchExif(filePath);
-    setIsLoading(false)
-    alert(exif);
+    onToggle()
+    // if (isLoading) return;
+    // setIsLoading(true);
+    // const exif = await fetchExif(filePath);
+    // setIsLoading(false)
+    // alert(exif);
   }
 
   return (
     <IconButton
       label="Info button"
       icon={InfoIcon}
-      disabled={!currentSlide || isLoading}
+      disabled={!currentSlide}
       onClick={handleClick}
     />
   );
@@ -183,8 +240,7 @@ type Props = {
 export function PhotoViewer({images, imageIndexToOpen, setImageIndexToOpen, switchPhotoFullSize, selectItem }: Props) {
 
   const [hideControlUI, setHideControlUI] = useState(false);
-
-  console.log('hideControlUI', hideControlUI);
+  const [isExifShow, setIsExifShow] = useState(false);
 
   return (
       <Lightbox
@@ -227,13 +283,14 @@ export function PhotoViewer({images, imageIndexToOpen, setImageIndexToOpen, swit
         toolbar={{
           buttons: [
             <CheckBoxButton key="checkbox-button" selectItem={selectItem}/>,
-            <InfoButton key="open-info-button" />,
+            <InfoButton key="open-info-button" onToggle={() => setIsExifShow(f => !f)}/>,
             // <OpenPreviewButton key="open-preview-button" />,
             <FullSizeButton key="full-size-button" makeFullSize={switchPhotoFullSize}/>,
             <DownloadRawButton key="raw-button" />,
             "close"],
         }}
-        plugins={[Fullscreen, Zoom, Captions, Download]}
+        showExif={isExifShow}
+        plugins={[Fullscreen, Zoom, Captions, Download, MyPlugin]}
       />
   );
 }
