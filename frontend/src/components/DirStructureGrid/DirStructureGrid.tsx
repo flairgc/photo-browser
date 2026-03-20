@@ -188,9 +188,6 @@ type Props = {
 
 export const DirStructureGrid = ({items, setImageIndexToOpen, selectItem, isSelectMode}: Props) => {
 
-  // const { ref, pressed } = useLongPress<HTMLDivElement>(() => console.log('callback'));
-  // console.log('pressed', pressed)
-
   return (
     <ParentSize>
       {({ height }) => (

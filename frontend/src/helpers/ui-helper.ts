@@ -21,4 +21,3 @@ export const getDeviceType = (): DeviceType => {
 
 export const deviceType = getDeviceType();
 
-console.log('deviceType', deviceType);
