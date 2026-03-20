@@ -73,22 +73,29 @@ export function App() {
     const url = new URL(window.location.href);
     const hasPreviewNow = url.searchParams.has(previewIndexName);
 
-    // ─────── ОТКРЫТИЕ ───────
+    // открыть фото
     if (newIndex !== undefined && !hasPreviewNow) {
       url.searchParams.set(previewIndexName, String(newIndex));
-
       navigate(url.pathname + url.search); // PUSH
       return;
     }
 
-    // ─────── ЛИСТАНИЕ / ЗАКРЫТИЕ ───────
-    if (newIndex === undefined) {
-      url.searchParams.delete(previewIndexName);
-    } else {
-      url.searchParams.set(previewIndexName, String(newIndex));
+    // закрыть фото
+    if (newIndex === undefined && hasPreviewNow) {
+      if (window.history.length > 1) {
+        window.history.back();
+      } else {
+        url.searchParams.delete(previewIndexName);
+        navigate(url.pathname + url.search, { replace: true });
+      }
+      return;
     }
 
-    navigate(url.pathname + url.search, { replace: true });
+    // листание внутри открытого превью
+    if (newIndex !== undefined) {
+      url.searchParams.set(previewIndexName, String(newIndex));
+      navigate(url.pathname + url.search, { replace: true });
+    }
   };
 
   const [breadcrumbs, setBreadcrumbs] = useState<BreadcrumbDto[]>([]);

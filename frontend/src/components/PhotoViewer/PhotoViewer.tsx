@@ -1,4 +1,6 @@
+import { deviceType } from '@/helpers/ui-helper.ts';
 import { useState } from 'react';
+import { clsx } from 'clsx';
 import {
   Lightbox,
   IconButton,
@@ -10,6 +12,7 @@ import Captions from "yet-another-react-lightbox/plugins/captions";
 import Download from "yet-another-react-lightbox/plugins/download";
 import "yet-another-react-lightbox/styles.css";
 import "yet-another-react-lightbox/plugins/captions.css";
+import styles from "./PhotoViewer.module.css";
 
 import { fetchExif } from '@/services/common.api.ts';
 import type { DirItem } from '@/types/fs.ts';
@@ -17,6 +20,8 @@ import AlmazIcon from '@/assets/almaz.svg?react';
 // import EyeIcon from '@/assets/eye.svg?react';
 import InfoIcon from '@/assets/info.svg?react';
 import { CheckBoxIcon, CheckedIcon, FullSizeIcon } from '@/components/PhotoViewer/svg-lib.tsx';
+
+
 
 
 
@@ -177,18 +182,37 @@ type Props = {
 
 export function PhotoViewer({images, imageIndexToOpen, setImageIndexToOpen, switchPhotoFullSize, selectItem }: Props) {
 
+  const [hideControlUI, setHideControlUI] = useState(false);
+
+  console.log('hideControlUI', hideControlUI);
+
   return (
       <Lightbox
+        className={clsx(styles.lightbox, {
+          [styles.lightboxHideUI]: hideControlUI,
+        })}
         open={imageIndexToOpen !== undefined}
         close={() => setImageIndexToOpen(undefined)}
         index={imageIndexToOpen}
         carousel={{
           finite: true,
           preload: 2,
+          padding: 0,
         }}
-        controller={{ closeOnPullDown: true, closeOnPullUp: true, closeOnBackdropClick: false }}
+        controller={{
+          closeOnPullDown: deviceType !== 'desktop',
+          closeOnPullUp: deviceType !== 'desktop',
+          disableSwipeNavigation : deviceType === 'desktop',
+          closeOnBackdropClick: deviceType === 'desktop',
+      }}
         animation={{ fade: 100, swipe: 150 }}
-        on={{ view: ({ index: currentIndex }) => setImageIndexToOpen(currentIndex) }}
+        on={{
+          view: ({ index: currentIndex }) => {
+            setImageIndexToOpen(currentIndex);
+            setHideControlUI(false);
+          },
+          click: () => setHideControlUI(f => !f),
+        }}
         slides={images.map((item) => ({
           src: item.fullSize ? `/api/image/file?path=${item.path}&preview` : `/api/image/preview?path=${item.path}&size=big`,
           title: item.name,
@@ -205,7 +229,7 @@ export function PhotoViewer({images, imageIndexToOpen, setImageIndexToOpen, swit
             <CheckBoxButton key="checkbox-button" selectItem={selectItem}/>,
             <InfoButton key="open-info-button" />,
             // <OpenPreviewButton key="open-preview-button" />,
-            <FullSizeButton key="test-button" makeFullSize={switchPhotoFullSize}/>,
+            <FullSizeButton key="full-size-button" makeFullSize={switchPhotoFullSize}/>,
             <DownloadRawButton key="raw-button" />,
             "close"],
         }}

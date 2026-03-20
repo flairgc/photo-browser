@@ -1,0 +1,29 @@
+.lightbox :global(.yarl__navigation_prev),
+.lightbox :global(.yarl__navigation_next) {
+    top: 62px;
+    bottom: 0;
+    transform: none;
+    /*transform: translateY(-31px);*/
+    padding: 24px;
+}
+
+.lightbox :global(.yarl__navigation_next svg),
+.lightbox :global(.yarl__navigation_prev svg) {
+    transform: translateY(-50%);
+}
+
+.lightbox :global(.yarl__button[aria-label="Zoom in"]),
+.lightbox :global(.yarl__button[aria-label="Zoom out"]) {
+    display: none;
+}
+
+
+.lightboxHideUI :global(.yarl__slide_title_container),
+.lightboxHideUI :global(.yarl__toolbar) {
+    display: none;
+}
+
+.lightboxHideUI :global(.yarl__navigation_prev),
+.lightboxHideUI :global(.yarl__navigation_next) {
+    opacity: 0;
+}
