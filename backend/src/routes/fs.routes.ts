@@ -36,8 +36,7 @@ export default async function fsRoutes(fastify: FastifyInstance) {
     // ─────────────────────────────────────────────
     // cache
     // ─────────────────────────────────────────────
-    const cacheDir = path.join(process.cwd(), '.cache');
-    await fs.promises.mkdir(CACHE_DIR, { recursive: true });
+    const cacheDir = CACHE_DIR!;
 
     const firstPath = paths[0];
     const archiveName =

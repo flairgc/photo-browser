@@ -1,9 +1,12 @@
 import { buildApp } from './app.js';
 import { warmupImageCache } from './services/imageCacheWarmup.service.js';
+import { initImageCache } from './services/imageCache.js';
 
 const app = buildApp();
 
 console.log('Backend app.config', app.config)
+
+initImageCache(app.config.FS_ROOT);
 
 const start = async () => {
     try {

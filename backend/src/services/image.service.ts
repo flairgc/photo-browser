@@ -10,8 +10,14 @@ export async function createFileStream(root: string, relativePath: string) {
 }
 
 const previewSizes = {
-  small: 400,
-  big: 2560,
+  small: {
+    size: 200,
+    quality: 75,
+  },
+  big: {
+    size: 2560,
+    quality: 85,
+  },
 }
 
 export async function createPreviewViewImage(
@@ -20,7 +26,8 @@ export async function createPreviewViewImage(
 ): Promise<Buffer> {
   const fullPath = resolveSafePath(root, relativePath);
 
-  const sizePx = previewSizes[size];
+  const sizePx = previewSizes[size].size;
+  const quality = previewSizes[size].quality;
   const cacheKey = `${fullPath}::view-${sizePx}`;
 
   const cached = await getFromCache(cacheKey);
@@ -37,7 +44,7 @@ export async function createPreviewViewImage(
       withoutEnlargement: true,
     })
     .withMetadata()
-    .jpeg({ quality: size === 'small' ? 80 : 85 })
+    .jpeg({ quality })
     .toBuffer();
 
   await saveToCache(cacheKey, buffer);

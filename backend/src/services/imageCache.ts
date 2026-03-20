@@ -2,15 +2,31 @@ import fs from 'fs/promises';
 import path from 'path';
 import crypto from 'crypto';
 
-export const CACHE_DIR = path.resolve(process.cwd(), '.cache');
+
+export let CACHE_DIR: string | null = null;
+
+/**
+ * Инициализируем кеш один раз при старте
+ */
+export function initImageCache(root: string) {
+  CACHE_DIR = path.join(root, '.cache_photo_browser_app');
+}
+
+function ensureInited() {
+  if (!CACHE_DIR) {
+    throw new Error('Image cache is not initialized');
+  }
+}
 
 async function ensureCacheDir() {
-  await fs.mkdir(CACHE_DIR, { recursive: true });
+  ensureInited();
+  await fs.mkdir(CACHE_DIR!, { recursive: true });
 }
 
 function getCacheFilePath(key: string) {
+  ensureInited();
   const hash = crypto.createHash('sha1').update(key).digest('hex');
-  return path.join(CACHE_DIR, `${hash}.bin`);
+  return path.join(CACHE_DIR!, `${hash}.bin`);
 }
 
 export async function getFromCache(key: string): Promise<Buffer | undefined> {

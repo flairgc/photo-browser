@@ -4,7 +4,7 @@ import {
   type CSSProperties,
   type HTMLAttributes,
   type PropsWithChildren,
-  type Ref,
+  type Ref, useRef, useLayoutEffect,
 } from 'react';
 import { useLocation } from 'wouter';
 // import { useLongPress } from '@siberiacancode/reactuse';
@@ -143,10 +143,9 @@ const ItemContent = ({index, items, setImageIndexToOpen, selectItem, isSelectMod
         }}
       >
         {isImage ? (
-          <img
-            className={styles.previewImg}
-            src={`/api/image/preview?path=${item.path}&size=small`}
-            alt={item.name}
+          <Image
+            path={item.path}
+            name={item.name}
           />
         ) : (
           <div className="icon" onClick={() => {
@@ -216,3 +215,31 @@ export const DirStructureGrid = ({items, setImageIndexToOpen, selectItem, isSele
     </ParentSize>
   );
 }
+
+type ImageProps = {
+  name: string
+  path: string
+};
+
+const Image = ({name, path}: ImageProps) => {
+
+  const imgRef = useRef<HTMLImageElement>(null);
+  const src = `/api/image/preview?path=${path}&size=small`;
+
+  useLayoutEffect(() => {
+    imgRef.current!.src = src;
+    return () => {
+      imgRef.current!.src = '';
+    };
+  }, []);
+
+  return (
+    <img
+      ref={imgRef}
+      className={styles.previewImg}
+      src={src}
+      alt={name}
+      loading="lazy"
+    />
+  );
+};
