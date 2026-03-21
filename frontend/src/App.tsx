@@ -245,6 +245,7 @@ export function App() {
            setImageIndexToOpen={setImageIndexToOpen}
            selectItem={selectItem}
            isSelectMode={isSelectMode}
+           imageIndexToOpen={imageIndexToOpen}
          />
 
       </main>

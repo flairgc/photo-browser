@@ -113,7 +113,7 @@
 /* ===== Content ===== */
 
 .container {
-    padding: 0 12px;
+    /*padding: 0 12px;*/
     flex-grow: 1;
     /*height: 100%;*/
 }

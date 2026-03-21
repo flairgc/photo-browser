@@ -1,10 +1,10 @@
-import { VirtuosoGrid, type GridComponents } from 'react-virtuoso';
+import { VirtuosoGrid, type GridComponents, type VirtuosoGridHandle } from 'react-virtuoso';
 import {
   forwardRef,
   type CSSProperties,
   type HTMLAttributes,
   type PropsWithChildren,
-  type Ref, useRef, useLayoutEffect,
+  type Ref, useRef, useLayoutEffect, useEffect, useState,
 } from 'react';
 import { useLocation } from 'wouter';
 // import { useLongPress } from '@siberiacancode/reactuse';
@@ -44,16 +44,20 @@ const gridComponents: GridComponents = {
   }),
 
   Item: function GridItem({ children, ...props }: GridDivProps) {
+
+    const { context, ...otherProps } = props as any;
+    const width = context.itemWidth;
+
     return (
       <div
-        {...props}
+        {...otherProps}
         style={{
           // padding: '0.5rem',
-          width: '160px',
+          width,
           padding: 5,
-          display: 'flex',
-          flex: 'none',
-          alignContent: 'stretch',
+          // display: 'flex',
+          // flex: 'none',
+          // alignContent: 'stretch',
           boxSizing: 'border-box',
         }}
       >
@@ -93,9 +97,10 @@ type ItemContentProps = {
   setImageIndexToOpen: (index: number) => void;
   selectItem: (name: string, flag?: boolean) => void;
   isSelectMode: boolean;
+  itemWidth: number;
 }
 
-const ItemContent = ({index, items, setImageIndexToOpen, selectItem, isSelectMode}: ItemContentProps) => {
+const ItemContent = ({index, items, setImageIndexToOpen, selectItem, isSelectMode, itemWidth}: ItemContentProps) => {
   const [,navigate] = useLocation();
 
   const item = items[index];
@@ -106,15 +111,15 @@ const ItemContent = ({index, items, setImageIndexToOpen, selectItem, isSelectMod
 
   const isImage = item.type === 'image';
 
-
   return (
     <div
       style={{
         display: 'flex',
+        justifyContent: 'center',
         flex: 1,
         textAlign: 'center',
         // whiteSpace: 'nowrap',
-        width: 150,
+        width: itemWidth - 10,
         // padding: 5,
         // height: 180,
       }}
@@ -122,6 +127,7 @@ const ItemContent = ({index, items, setImageIndexToOpen, selectItem, isSelectMod
       <div
         key={item.name}
         className={styles.item}
+        style={{width: itemWidth - 10}}
         onTouchStart={isImage ? longPress.onTouchStart : undefined}
         onTouchEnd={isImage ? longPress.onTouchEnd : undefined}
         onTouchMove={isImage ? longPress.onTouchMove : undefined}
@@ -184,32 +190,98 @@ type Props = {
   setImageIndexToOpen: (index: number) => void;
   selectItem: (name: string, flag?: boolean) => void;
   isSelectMode: boolean;
+  imageIndexToOpen: number | undefined;
 }
 
-export const DirStructureGrid = ({items, setImageIndexToOpen, selectItem, isSelectMode}: Props) => {
+export const DirStructureGrid = ({
+                                   items,
+                                   setImageIndexToOpen,
+                                   selectItem,
+                                   isSelectMode,
+                                   imageIndexToOpen,
+}: Props) => {
+
+  const [showScrollTop, setShowScrollTop] = useState(false);
+
+  const virtuosoRef = useRef<VirtuosoGridHandle>(null);
+
+  const scrollToItem = (index: number) => {
+    virtuosoRef.current?.scrollToIndex({
+      index,
+      align: 'center', // 'start' | 'center' | 'end'
+      behavior: 'smooth', // или 'auto'
+    })
+  }
+
+  useEffect(() => {
+    if (imageIndexToOpen) scrollToItem(imageIndexToOpen)
+  }, [imageIndexToOpen])
+
+
 
   return (
+    <div
+      style={{
+        height: '100%',
+        width: '100%',
+      }}
+      // onClick={() => scrollToItem()}
+    >
     <ParentSize>
-      {({ height }) => (
-      <VirtuosoGrid
-        style={{ height }}
-        totalCount={items.length}
-        components={gridComponents}
-        increaseViewportBy={1000}
-        itemContent={(index: number) => {
-          return (
-            <ItemContent
-              index={index}
-              items={items}
-              setImageIndexToOpen={setImageIndexToOpen}
-              selectItem={selectItem}
-              isSelectMode={isSelectMode}
-            />
-          )
-        }}
-      />
-      )}
+      {({ height, width }) => {
+
+        const scrollWidthWorkAround = 15;
+
+        // const itemWidth = width > 0 ? width / Math.floor(width / 160) : 0;
+
+        const widthWithoutScroll = width > 0 ? width - scrollWidthWorkAround : 1;
+
+        const itemCountRow = Math.floor(widthWithoutScroll / 160);
+        const itemWidthWithGap = widthWithoutScroll / itemCountRow
+
+        return (
+        <VirtuosoGrid
+          ref={virtuosoRef}
+          style={{ height }}
+          totalCount={items.length}
+          components={gridComponents}
+          increaseViewportBy={1000}
+          itemContent={(index: number) => {
+            return (
+              <ItemContent
+                index={index}
+                items={items}
+                setImageIndexToOpen={setImageIndexToOpen}
+                selectItem={selectItem}
+                isSelectMode={isSelectMode}
+                itemWidth={itemWidthWithGap}
+              />
+            )
+          }}
+          atTopStateChange={(isAtTop) => {
+            setShowScrollTop(!isAtTop);
+          }}
+          context={{
+            itemWidthWithGap
+          }}
+        />
+      )}}
     </ParentSize>
+      {(
+        <button
+          className={`${styles.fab} ${showScrollTop ? styles.visible : styles.hidden}`}
+          onClick={() => {
+            virtuosoRef.current?.scrollToIndex({
+              index: 0,
+              align: 'start',
+              behavior: 'smooth',
+            });
+          }}
+        >
+          ↑
+        </button>
+      )}
+    </div>
   );
 }
 
