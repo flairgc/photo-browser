@@ -18,9 +18,35 @@
 }
 
 
+/*.lightboxHideUI :global(.yarl__slide_title_container),*/
+/*.lightboxHideUI :global(.yarl__toolbar) {*/
+/*    display: none;*/
+/*}*/
+
+/*.lightboxHideUI :global(.yarl__navigation_prev),*/
+/*.lightboxHideUI :global(.yarl__navigation_next) {*/
+/*    opacity: 0;*/
+/*}*/
+
+.lightbox :global(.yarl__slide_title_container),
+.lightbox :global(.yarl__toolbar){
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
 .lightboxHideUI :global(.yarl__slide_title_container),
-.lightboxHideUI :global(.yarl__toolbar) {
-    display: none;
+.lightboxHideUI :global(.yarl__toolbar){
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.lightbox :global(.yarl__navigation_prev),
+.lightbox :global(.yarl__navigation_next) {
+    opacity: 1;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
 }
 
 .lightboxHideUI :global(.yarl__navigation_prev),

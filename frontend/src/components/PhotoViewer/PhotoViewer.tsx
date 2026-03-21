@@ -1,81 +1,20 @@
-import { deviceType } from '@/helpers/ui-helper.ts';
-import { useEffect, useState } from 'react';
-import { clsx } from 'clsx';
-import {
-  Lightbox,
-  IconButton,
-  useLightboxState,
-} from "yet-another-react-lightbox";
-import Fullscreen from "yet-another-react-lightbox/plugins/fullscreen";
-import Zoom from "yet-another-react-lightbox/plugins/zoom";
-import Captions from "yet-another-react-lightbox/plugins/captions";
-import Download from "yet-another-react-lightbox/plugins/download";
-import { createModule, MODULE_TOOLBAR } from "yet-another-react-lightbox";
-import type { PluginProps } from "yet-another-react-lightbox";
-import "yet-another-react-lightbox/styles.css";
-import "yet-another-react-lightbox/plugins/captions.css";
-import styles from "./PhotoViewer.module.css";
-
-import { fetchExif } from '@/services/common.api.ts';
-import type { DirItem } from '@/types/fs.ts';
 import AlmazIcon from '@/assets/almaz.svg?react';
 // import EyeIcon from '@/assets/eye.svg?react';
 import InfoIcon from '@/assets/info.svg?react';
+import { ExifPlugin } from '@/components/PhotoViewer/ExifPlugin.tsx';
 import { CheckBoxIcon, CheckedIcon, FullSizeIcon } from '@/components/PhotoViewer/svg-lib.tsx';
-
-
-const TOOLBAR_HEIGHT = 62;
-
-
-function MyComponent({ showExif }: any) {
-
-  const [isLoading, setIsLoading] = useState(false);
-  const [exif, setExif] = useState('');
-
-  const { currentSlide } = useLightboxState();
-
-  const filePath = currentSlide?.filePath;
-
-  if (!filePath) return null;
-
-  useEffect(() => {
-      if (!showExif) return;
-      setIsLoading(true);
-      fetchExif(filePath).then((exif) => {
-        setExif(exif);
-      }).finally(() => {
-        setIsLoading(false);
-      });
-  }, [filePath, showExif]);
-
-  return showExif ? (
-    <div style={{
-      position: 'absolute',
-      top: TOOLBAR_HEIGHT,
-      right: 0,
-      backgroundColor: 'rgba(0, 0, 0, 0.8)',
-      color: 'white',
-      padding: 16,
-    }}>
-      {isLoading ? (
-        <span> Загрузка exif...</span>
-      ) : (
-        exif
-          ? <span style={{ whiteSpace: 'pre-line' }}>{exif}</span>
-          : <span>Отсутствует или не удалось загрузить Exif</span>
-      )}
-    </div>
-  ) : null;
-}
-
-const MyModule = createModule("MyModule", MyComponent);
-
-function MyPlugin({ addSibling }: PluginProps) {
-  addSibling(MODULE_TOOLBAR, MyModule, false);
-}
-
-
-
+import { deviceType } from '@/helpers/ui-helper.ts';
+import type { DirItem } from '@/types/fs.ts';
+import { clsx } from 'clsx';
+import { useRef, useState } from 'react';
+import { IconButton, Lightbox, useLightboxState, } from "yet-another-react-lightbox";
+import "yet-another-react-lightbox/styles.css";
+import "yet-another-react-lightbox/plugins/captions.css";
+import Captions from "yet-another-react-lightbox/plugins/captions";
+import Download from "yet-another-react-lightbox/plugins/download";
+import Fullscreen from "yet-another-react-lightbox/plugins/fullscreen";
+import Zoom from "yet-another-react-lightbox/plugins/zoom";
+import styles from "./PhotoViewer.module.css";
 
 
 declare module "yet-another-react-lightbox" {
@@ -96,9 +35,11 @@ declare module "yet-another-react-lightbox" {
   }
   interface LightboxProps {
     showExif?: boolean;
+    hideUI?: boolean;
   }
 }
 
+const CLICK_DELAY = 300;
 
 const CheckBoxButton = ({selectItem}: {
   selectItem: (name: string, flag?: boolean) => void;
@@ -239,13 +180,28 @@ type Props = {
 
 export function PhotoViewer({images, imageIndexToOpen, setImageIndexToOpen, switchPhotoFullSize, selectItem }: Props) {
 
-  const [hideControlUI, setHideControlUI] = useState(false);
+  const [isControlUIHidden, setIsControlUIHidden] = useState(false);
   const [isExifShow, setIsExifShow] = useState(false);
+
+  const clickTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const clickHandler = () => {
+    if (clickTimeoutRef.current) {
+      clearTimeout(clickTimeoutRef.current);
+      clickTimeoutRef.current = null;
+      return;
+    }
+
+    clickTimeoutRef.current = setTimeout(() => {
+      setIsControlUIHidden(f => !f);
+      clickTimeoutRef.current = null;
+    }, CLICK_DELAY);
+  };
 
   return (
       <Lightbox
         className={clsx(styles.lightbox, {
-          [styles.lightboxHideUI]: hideControlUI,
+          [styles.lightboxHideUI]: isControlUIHidden,
         })}
         open={imageIndexToOpen !== undefined}
         close={() => setImageIndexToOpen(undefined)}
@@ -265,9 +221,9 @@ export function PhotoViewer({images, imageIndexToOpen, setImageIndexToOpen, swit
         on={{
           view: ({ index: currentIndex }) => {
             setImageIndexToOpen(currentIndex);
-            setHideControlUI(false);
+            if (currentIndex === undefined) setIsControlUIHidden(false);
           },
-          click: () => setHideControlUI(f => !f),
+          click: clickHandler,
         }}
         slides={images.map((item) => ({
           src: item.fullSize ? `/api/image/file?path=${item.path}&preview` : `/api/image/preview?path=${item.path}&size=big`,
@@ -290,7 +246,8 @@ export function PhotoViewer({images, imageIndexToOpen, setImageIndexToOpen, swit
             "close"],
         }}
         showExif={isExifShow}
-        plugins={[Fullscreen, Zoom, Captions, Download, MyPlugin]}
+        hideUI={isControlUIHidden}
+        plugins={[Fullscreen, Zoom, Captions, Download, ExifPlugin]}
       />
   );
 }
