@@ -2,12 +2,17 @@ import AlmazIcon from '@/assets/almaz.svg?react';
 // import EyeIcon from '@/assets/eye.svg?react';
 import InfoIcon from '@/assets/info.svg?react';
 import { ExifPlugin } from '@/components/PhotoViewer/ExifPlugin.tsx';
+import { SlideContainer } from '@/components/PhotoViewer/SlideContainer.tsx';
 import { CheckBoxIcon, CheckedIcon, FullSizeIcon } from '@/components/PhotoViewer/svg-lib.tsx';
 import { deviceType } from '@/helpers/ui-helper.ts';
 import type { DirItem } from '@/types/fs.ts';
 import { clsx } from 'clsx';
 import { useRef, useState } from 'react';
-import { IconButton, Lightbox, useLightboxState, } from "yet-another-react-lightbox";
+import {
+  IconButton,
+  Lightbox,
+  useLightboxState,
+} from "yet-another-react-lightbox";
 import "yet-another-react-lightbox/styles.css";
 import "yet-another-react-lightbox/plugins/captions.css";
 import Captions from "yet-another-react-lightbox/plugins/captions";
@@ -38,8 +43,6 @@ declare module "yet-another-react-lightbox" {
     hideUI?: boolean;
   }
 }
-
-const CLICK_DELAY = 300;
 
 const CheckBoxButton = ({selectItem}: {
   selectItem: (name: string, flag?: boolean) => void;
@@ -183,20 +186,7 @@ export function PhotoViewer({images, imageIndexToOpen, setImageIndexToOpen, swit
   const [isControlUIHidden, setIsControlUIHidden] = useState(false);
   const [isExifShow, setIsExifShow] = useState(false);
 
-  const clickTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const clickHandler = () => {
-    if (clickTimeoutRef.current) {
-      clearTimeout(clickTimeoutRef.current);
-      clickTimeoutRef.current = null;
-      return;
-    }
-
-    clickTimeoutRef.current = setTimeout(() => {
-      setIsControlUIHidden(f => !f);
-      clickTimeoutRef.current = null;
-    }, CLICK_DELAY);
-  };
+  const lightboxRef = useRef(null);
 
   return (
       <Lightbox
@@ -212,6 +202,7 @@ export function PhotoViewer({images, imageIndexToOpen, setImageIndexToOpen, swit
           padding: 0,
         }}
         controller={{
+          ref: lightboxRef,
           closeOnPullDown: deviceType !== 'desktop',
           closeOnPullUp: deviceType !== 'desktop',
           disableSwipeNavigation : deviceType === 'desktop',
@@ -223,7 +214,9 @@ export function PhotoViewer({images, imageIndexToOpen, setImageIndexToOpen, swit
             setImageIndexToOpen(currentIndex);
             if (currentIndex === undefined) setIsControlUIHidden(false);
           },
-          click: clickHandler,
+        }}
+        render={{
+          slideContainer: (props) => <SlideContainer {...props} toggleUI={() => setIsControlUIHidden(f => !f)}/>
         }}
         slides={images.map((item) => ({
           src: item.fullSize ? `/api/image/file?path=${item.path}&preview` : `/api/image/preview?path=${item.path}&size=big`,

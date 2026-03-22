@@ -1,3 +1,4 @@
+import { scrollbarWidth } from '@/helpers/ui-helper.ts';
 import { VirtuosoGrid, type GridComponents, type VirtuosoGridHandle } from 'react-virtuoso';
 import {
   forwardRef,
@@ -8,6 +9,7 @@ import {
 } from 'react';
 import { useLocation } from 'wouter';
 // import { useLongPress } from '@siberiacancode/reactuse';
+import ChevronUp from '@/assets/chevron-up.svg?react';
 
 import type { DirItem } from '@/types/fs.ts';
 import { ParentSize } from '@/lib/parent-size/ParentSize.tsx';
@@ -20,6 +22,8 @@ type GridDivProps = PropsWithChildren<{
   style?: CSSProperties;
 }> &
   HTMLAttributes<HTMLDivElement>;
+
+const gridItemPadding = 5;
 
 
 const gridComponents: GridComponents = {
@@ -54,7 +58,7 @@ const gridComponents: GridComponents = {
         style={{
           // padding: '0.5rem',
           width,
-          padding: 5,
+          padding: gridItemPadding,
           // display: 'flex',
           // flex: 'none',
           // alignContent: 'stretch',
@@ -119,7 +123,7 @@ const ItemContent = ({index, items, setImageIndexToOpen, selectItem, isSelectMod
         flex: 1,
         textAlign: 'center',
         // whiteSpace: 'nowrap',
-        width: itemWidth - 10,
+        width: itemWidth - gridItemPadding * 2,
         // padding: 5,
         // height: 180,
       }}
@@ -127,7 +131,7 @@ const ItemContent = ({index, items, setImageIndexToOpen, selectItem, isSelectMod
       <div
         key={item.name}
         className={styles.item}
-        style={{width: itemWidth - 10}}
+        style={{width: itemWidth - gridItemPadding * 2}}
         onTouchStart={isImage ? longPress.onTouchStart : undefined}
         onTouchEnd={isImage ? longPress.onTouchEnd : undefined}
         onTouchMove={isImage ? longPress.onTouchMove : undefined}
@@ -225,46 +229,43 @@ export const DirStructureGrid = ({
         height: '100%',
         width: '100%',
       }}
-      // onClick={() => scrollToItem()}
     >
     <ParentSize>
       {({ height, width }) => {
 
-        const scrollWidthWorkAround = 15;
-
         // const itemWidth = width > 0 ? width / Math.floor(width / 160) : 0;
 
-        const widthWithoutScroll = width > 0 ? width - scrollWidthWorkAround : 1;
+        const widthWithoutScroll = width > 0 ? width - scrollbarWidth : 1;
 
         const itemCountRow = Math.floor(widthWithoutScroll / 160);
         const itemWidthWithGap = widthWithoutScroll / itemCountRow
 
         return (
-        <VirtuosoGrid
-          ref={virtuosoRef}
-          style={{ height }}
-          totalCount={items.length}
-          components={gridComponents}
-          increaseViewportBy={1000}
-          itemContent={(index: number) => {
-            return (
-              <ItemContent
-                index={index}
-                items={items}
-                setImageIndexToOpen={setImageIndexToOpen}
-                selectItem={selectItem}
-                isSelectMode={isSelectMode}
-                itemWidth={itemWidthWithGap}
-              />
-            )
-          }}
-          atTopStateChange={(isAtTop) => {
-            setShowScrollTop(!isAtTop);
-          }}
-          context={{
-            itemWidthWithGap
-          }}
-        />
+          <VirtuosoGrid
+            ref={virtuosoRef}
+            style={{ height }}
+            totalCount={items.length}
+            components={gridComponents}
+            increaseViewportBy={1000}
+            itemContent={(index: number) => {
+              return (
+                <ItemContent
+                  index={index}
+                  items={items}
+                  setImageIndexToOpen={setImageIndexToOpen}
+                  selectItem={selectItem}
+                  isSelectMode={isSelectMode}
+                  itemWidth={itemWidthWithGap}
+                />
+              )
+            }}
+            atTopStateChange={(isAtTop) => {
+              setShowScrollTop(!isAtTop);
+            }}
+            context={{
+              itemWidthWithGap
+            }}
+           />
       )}}
     </ParentSize>
       {(
@@ -278,7 +279,7 @@ export const DirStructureGrid = ({
             });
           }}
         >
-          ↑
+          <ChevronUp width={30} height={30} />
         </button>
       )}
     </div>
