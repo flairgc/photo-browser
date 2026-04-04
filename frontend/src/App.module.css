@@ -6,6 +6,8 @@
     --accent: #2563eb;
     --border: #e5e7eb;
     --radius: 12px;
+
+    height: 100dvh;
 }
 
 
@@ -41,6 +43,7 @@
     bottom: 0;
     left: 0;
     background-color: #58baea;
+    overflow-y: auto;
 }
 
 .selectPanel {
@@ -59,6 +62,12 @@
 .selectPanelButtons {
     display: flex;
     gap: 16px;
+}
+
+.selectPanelButtons button {
+    border: 1px solid white;
+    border-radius: 4px;
+    padding: 0 4px;
 }
 
 .btn_group {

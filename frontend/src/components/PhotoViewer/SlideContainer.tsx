@@ -1,5 +1,7 @@
-import { useRef, type PointerEvent } from 'react';
+import { useRef, type PointerEvent, cloneElement, isValidElement, type HTMLAttributes } from 'react';
 import type { RenderSlideContainerProps } from 'yet-another-react-lightbox';
+
+type PointerHandlers = HTMLAttributes<HTMLElement>;
 
 const CLICK_DELAY = 300; // тут, возможно, стоит увеличить до 500, т.к. в библитеке задаржка дабл тача 300 а клика 500
 const MOVE_THRESHOLD = 5; // px
@@ -43,13 +45,18 @@ export const SlideContainer = ({ children, toggleUI }: RenderSlideContainerProps
     }, CLICK_DELAY);
   };
 
-  return (
-    <div
-      onPointerDown={handlePointerDown}
-      onPointerMove={handlePointerMove}
-      onPointerUp={handlePointerUp}
-    >
-      {children}
-    </div>
-  );
+  const mergeHandlers = (original?: any, next?: any) => (e: any) => {
+    original?.(e);
+    next?.(e);
+  };
+
+  if (isValidElement<PointerHandlers>(children)) {
+    return cloneElement(children, {
+      onPointerDown: mergeHandlers(children.props.onPointerDown, handlePointerDown),
+      onPointerMove: mergeHandlers(children.props.onPointerMove, handlePointerMove),
+      onPointerUp: mergeHandlers(children.props.onPointerUp, handlePointerUp),
+    });
+  }
+
+  return children;
 }

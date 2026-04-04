@@ -19,11 +19,12 @@
     user-select: none;
     -webkit-tap-highlight-color: transparent; /* убирает серую вспышку */
     touch-action: manipulation;
+    outline: 2px solid rgba(0, 0, 0, 0);
 }
 
 .item:hover {
     box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
-    outline: 2px solid #58BAEA;
+    outline-color: #58BAEA;
 }
 
 .icon {

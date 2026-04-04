@@ -1,4 +1,5 @@
 import { scrollbarWidth } from '@/helpers/ui-helper.ts';
+import { clsx } from 'clsx';
 import { VirtuosoGrid, type GridComponents, type VirtuosoGridHandle } from 'react-virtuoso';
 import {
   forwardRef,
@@ -131,7 +132,10 @@ const ItemContent = ({index, items, setImageIndexToOpen, selectItem, isSelectMod
       <div
         key={item.name}
         className={styles.item}
-        style={{width: itemWidth - gridItemPadding * 2}}
+        style={{
+          width: itemWidth - gridItemPadding * 2,
+          outlineColor: item.isSelected ? 'rgb(46 167 83)' : undefined,
+        }}
         onTouchStart={isImage ? longPress.onTouchStart : undefined}
         onTouchEnd={isImage ? longPress.onTouchEnd : undefined}
         onTouchMove={isImage ? longPress.onTouchMove : undefined}
@@ -175,10 +179,16 @@ const ItemContent = ({index, items, setImageIndexToOpen, selectItem, isSelectMod
         )}
         <div className={styles.name}>{item.name}</div>
         {isImage && (
-          <div className={`${styles.checkbox} ${item.isSelected || isSelectMode ? styles.checkActive : ''}`} onClick={(event) => {
-            event.stopPropagation();
-            selectItem(item.name)
-          }}>
+          <div
+            className={clsx(
+              styles.checkbox,
+              (item.isSelected || isSelectMode) && styles.checkActive
+            )}
+            onClick={(event) => {
+              event.stopPropagation();
+              selectItem(item.name)
+            }}
+          >
             {/*<div>*/}
             { item.isSelected ? <CheckedIcon /> : <CheckBoxIcon /> }
             {/*</div>*/}

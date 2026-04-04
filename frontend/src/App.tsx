@@ -193,7 +193,7 @@ export function App() {
 
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100dvh' }}>
       <header className={styles.header}>
         <div className={styles.wrapper}>
           <button className={styles.btn} title="Домой" onClick={() => navigate('/')}>
@@ -227,7 +227,7 @@ export function App() {
               <div className={styles.selectPanelTitle}>Выбрано фото: {selectedDirItem.length}</div>
               <div className={styles.selectPanelButtons}>
                 <button onClick={selectAllItems}>Выделить всё</button>
-                <button onClick={deselectItems}>X Снять выделение</button>
+                <button onClick={deselectItems}>X</button>
                 <button onClick={() => handleDownloadZip()} disabled={isDonwloadingZip}>Скачать</button>
                 <button onClick={() => handleDownloadZip(true)} disabled={isDonwloadingZip}>Скачать RAW</button>
               </div>
