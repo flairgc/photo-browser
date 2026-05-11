@@ -1,4 +1,4 @@
-import { useRef, type PointerEvent, cloneElement, isValidElement, type HTMLAttributes } from 'react';
+import { useRef, type PointerEvent, /*cloneElement,*/ isValidElement, type HTMLAttributes } from 'react';
 import type { RenderSlideContainerProps } from 'yet-another-react-lightbox';
 
 type PointerHandlers = HTMLAttributes<HTMLElement>;
@@ -45,17 +45,20 @@ export const SlideContainer = ({ children, toggleUI }: RenderSlideContainerProps
     }, CLICK_DELAY);
   };
 
-  const mergeHandlers = (original?: any, next?: any) => (e: any) => {
-    original?.(e);
-    next?.(e);
-  };
+  // const mergeHandlers = (original?: any, next?: any) => (e: any) => {
+  //   original?.(e);
+  //   next?.(e);
+  // };
 
   if (isValidElement<PointerHandlers>(children)) {
-    return cloneElement(children, {
-      onPointerDown: mergeHandlers(children.props.onPointerDown, handlePointerDown),
-      onPointerMove: mergeHandlers(children.props.onPointerMove, handlePointerMove),
-      onPointerUp: mergeHandlers(children.props.onPointerUp, handlePointerUp),
-    });
+    return   <div
+      style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+    >
+      {children}
+    </div>
   }
 
   return children;
