@@ -23,6 +23,7 @@
     "cache:warmup": "npm --workspace backend run cache:warmup --",
     "start:warmup": "cross-env BACKEND_CACHE_WARMUP=true npm start",
     "dev:warmup": "cross-env BACKEND_CACHE_WARMUP=true npm run dev",
-    "test:backend": "npm --workspace backend test"
+    "test:backend": "npm --workspace backend test",
+    "setup:termux": "node scripts/setup-termux.mjs"
   }
 }

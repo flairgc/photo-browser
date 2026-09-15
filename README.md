@@ -84,28 +84,58 @@ EXIF, ZIP, создание маленького превью и повторн�
 
 ## Android / Termux
 
-Проект и `node_modules` держите в домашней папке Termux (`~/photo-browser`).
-Для доступа к общему хранилищу телефона выполните `termux-setup-storage` и выдайте разрешение.
-Папку кеша можно указать в общем хранилище, как в примере выше, или внутри домашней папки Termux.
-
-Нужен Node.js 22.12+ (или 24+) и npm. В проекте уже используется нативная библиотека
-`sharp`; Android отсутствует в её списке готовых бинарников. Поэтому в Termux может
-потребоваться сборка с системным libvips и инструментами C++ — см.
-[установку sharp](https://sharp.pixelplumbing.com/install/).
-Обычная подготовка окружения:
+Проект и node_modules держите в домашней папке Termux: ~/projects/photo-browser.
+Для первого запуска выполните:
 
 ```sh
 pkg update
 pkg install nodejs-lts python make clang pkg-config libvips
-termux-setup-storage
-cd ~/photo-browser
-npm install
-npm start
+cd ~/projects/photo-browser
+npm run setup:termux
+npm run dev
 ```
 
-Если установщик `sharp` сообщает о недостающих `node-gyp` / `node-addon-api`,
-установите их как инструменты сборки и повторите установку по инструкции sharp.
-Сборка нативных зависимостей и запуск на Android здесь не проверялись.
-Откройте `http://localhost:4173` в браузере телефона (для `npm run dev` — порт 5173).
-В `.env` оставьте `VITE_BACKEND_API_HOST=http://localhost`: backend работает на самом
-телефоне, а адрес NAS используется только сервером для SMB.
+Откройте http://localhost:5173 в браузере телефона. Для обычного запуска используйте
+`npm start` и http://localhost:4173. Нужен Node.js 22.12+ или 24+.
+
+### Почему обычного npm install может не хватить
+
+Для Android ARM64 sharp 0.33 не поставляет готовый нативный модуль. Его нужно собрать
+с системным libvips (минимум 8.15.3). Без сборки backend завершится с ошибкой
+`Could not load the "sharp" module using the android-arm64 runtime`, хотя Vite запустится.
+См. [инструкцию sharp](https://sharp.pixelplumbing.com/install/).
+
+В проект добавлены инструменты node-gyp и node-addon-api. Команда
+`npm run setup:termux` проверяет системные зависимости, устанавливает npm-пакеты,
+включает C++17 для сборки и использует заголовки Node.js из Termux. C++17 необходим
+для node-addon-api 8; стандартные настройки sharp 0.33 используют C++11.
+В конце команда проверяет реальное создание JPEG. Если прежняя установка sharp
+была неполной, команда также запускает его пересборку.
+
+После неудачного npm install, переустановки зависимостей или обновления Node.js
+повторите `npm run setup:termux`. Не переносите node_modules с Windows на телефон.
+На Windows и обычном Linux продолжайте использовать `npm install`.
+
+Проверено на телефоне через SSH: Android ARM64, Node.js 24.18.0, libvips 8.18.6.
+Проходят установка, backend-тесты и сборки обеих частей. В режиме разработки
+проверены пять миниатюр с NAS, большое превью, EXIF и скачивание оригинала;
+кеш сохранялся локально в домашней папке Termux.
+Также исправлена обработка промежуточного ответа SMB STATUS_PENDING: приложение
+дожидается окончательных данных NAS, что предотвращает повреждение читаемых фотографий.
+
+### Кеш на телефоне и доступ к NAS
+
+Для кеша в общей памяти телефона выполните `termux-setup-storage` и выдайте разрешение.
+В корневом .env задайте:
+
+```dotenv
+BACKEND_CACHE_DIR=/storage/emulated/0/PhotoBrowserCache
+BACKEND_CACHE_WARMUP=false
+```
+
+Альтернатива без доступа к общей памяти:
+`BACKEND_CACHE_DIR=/data/data/com.termux/files/home/.cache/photo-browser`.
+Папка создаётся автоматически. После изменения .env перезапустите сервер.
+
+В .env оставьте `VITE_BACKEND_API_HOST=http://localhost`: backend работает на телефоне,
+а адрес NAS используется только сервером для SMB.

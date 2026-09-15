@@ -27,6 +27,23 @@ function storageError(error: unknown): Error {
   if (code === 0xc0000022) result.code = 'EACCES';
   return result;
 }
+export class NasClient extends Client {
+  override onResponse(response: Parameters<Client['onResponse']>[0]) {
+    // STATUS_PENDING is an interim reply for asynchronous NAS I/O. Resolving
+    // it as file data can corrupt a chunk; keep waiting for the final response.
+    if (response.header.status === 0x00000103) return;
+    super.onResponse(response);
+  }
+  override async send(request: Parameters<Client['send']>[0]) {
+    try { return await super.send(request); }
+    finally {
+      const id = request.header.messageId!;
+      clearTimeout(this.requestTimeoutIdMap.get(id));
+      this.requestTimeoutIdMap.delete(id);
+      this.responseCallbackMap.delete(id);
+    }
+  }
+}
 export class NasStorage implements Storage {
   readonly identity: string;
   private client?: Client;
@@ -46,7 +63,7 @@ export class NasStorage implements Storage {
   private async tree(): Promise<Tree> {
     if (this.connection && this.client?.connected) return this.connection;
     if (this.connection && !this.client?.socket?.destroyed) return this.connection;
-    const client = new Client(this.options.host, { port: this.options.port, connectTimeout: 10000, requestTimeout: 30000 });
+    const client = new NasClient(this.options.host, { port: this.options.port, connectTimeout: 10000, requestTimeout: 30000 });
     this.client = client;
     this.connection = (async () => {
       try {

@@ -2,11 +2,25 @@ import { test, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import { Client } from '@awo00/smb2';
-import { NasStorage } from '../src/services/nasStorage.js';
+import { NasStorage, NasClient } from '../src/services/nasStorage.js';
 const require = createRequire(import.meta.url);
 const Directory = require('@awo00/smb2/dist/client/Directory.js').default;
 const File = require('@awo00/smb2/dist/client/File.js').default;
 const options = {host:'192.0.2.1',share:'photos',path:'Family',username:'reader',password:'secret',domain:'',port:445};
+
+test('SMB pending response waits for final file data', () => {
+  const client = new NasClient('192.0.2.1');
+  const id = 7n;
+  let replies = 0;
+  client.responseCallbackMap.set(id, () => replies++);
+  const response = (status: number) => ({header:{status,messageId:id,type:8}}) as Parameters<Client['onResponse']>[0];
+  client.onResponse(response(0x103));
+  assert.equal(replies, 0);
+  assert.ok(client.responseCallbackMap.has(id));
+  client.onResponse(response(0));
+  assert.equal(replies, 1);
+  assert.ok(!client.responseCallbackMap.has(id));
+});
 
 test('SMB adapter: pagination, cache paths, cleanup, sanitized errors', async () => {
   const calls: string[] = [];
