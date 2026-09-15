@@ -1,32 +1,29 @@
 import { fetchExif } from '@/services/common.api.ts';
+import { Loader } from '@/components/Loader/Loader';
+import styles from './PhotoViewer.module.css';
 import { useEffect, useState } from 'react';
 import { createModule, MODULE_TOOLBAR, type PluginProps, useLightboxState } from 'yet-another-react-lightbox';
 
 const TOOLBAR_HEIGHT = 62;
 
-function ExifInfo({showExif, hideUI}: any) {
-
-  const show = showExif && !hideUI;
-
-  const [isLoading, setIsLoading] = useState(false);
+function ExifContent({ filePath }: { filePath: string }) {
+  const [isLoading, setIsLoading] = useState(true);
   const [exif, setExif] = useState('');
 
-  const {currentSlide} = useLightboxState();
-
-  const filePath = currentSlide?.filePath;
-
   useEffect(() => {
-    if (!show || !filePath) return;
-    setIsLoading(true);
-    fetchExif(filePath).then((exif) => {
-      setExif(exif);
+    const controller = new AbortController();
+    fetchExif(filePath, controller.signal).then((exif) => {
+      if (!controller.signal.aborted) setExif(exif);
+    }).catch(() => {
+      if (!controller.signal.aborted) setExif('');
     }).finally(() => {
-      setIsLoading(false);
+      if (!controller.signal.aborted) setIsLoading(false);
     });
-  }, [filePath, show]);
+    return () => controller.abort();
+  }, [filePath]);
 
-  return show ? (
-    <div style={{
+  return (
+    <div className={styles.exifPanel} style={{
       position: 'absolute',
       top: TOOLBAR_HEIGHT,
       right: 0,
@@ -37,14 +34,20 @@ function ExifInfo({showExif, hideUI}: any) {
       fontFamily: 'monospace',
     }}>
       {isLoading ? (
-        <span> Загрузка exif...</span>
+        <Loader label="Загрузка EXIF…" />
       ) : (
         exif
           ? <span style={{whiteSpace: 'pre-line'}}>{exif}</span>
           : <span>Отсутствует или не удалось загрузить Exif</span>
       )}
     </div>
-  ) : null;
+  );
+}
+
+function ExifInfo({ showExif, hideUI }: { showExif?: boolean; hideUI?: boolean }) {
+  const { currentSlide } = useLightboxState();
+  const filePath = currentSlide?.filePath;
+  return showExif && !hideUI && filePath ? <ExifContent key={filePath} filePath={filePath} /> : null;
 }
 
 const ExifModule = createModule("ExifModule", ExifInfo);

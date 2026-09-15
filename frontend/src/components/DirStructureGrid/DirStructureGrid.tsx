@@ -6,7 +6,7 @@ import {
   type CSSProperties,
   type HTMLAttributes,
   type PropsWithChildren,
-  type Ref, useRef, useLayoutEffect, useEffect, useState,
+  type Ref, useRef, useEffect, useState,
 } from 'react';
 import { useLocation } from 'wouter';
 // import { useLongPress } from '@siberiacancode/reactuse';
@@ -50,8 +50,8 @@ const gridComponents: GridComponents = {
 
   Item: function GridItem({ children, ...props }: GridDivProps) {
 
-    const { context, ...otherProps } = props as any;
-    const width = context.itemWidth;
+    const { context, ...otherProps } = props as GridDivProps & { context: { itemWidthWithGap: number } };
+    const width = context.itemWidthWithGap;
 
     return (
       <div
@@ -158,6 +158,7 @@ const ItemContent = ({index, items, setImageIndexToOpen, selectItem, isSelectMod
       >
         {isImage ? (
           <Image
+            key={item.path}
             path={item.path}
             name={item.name}
           />
@@ -235,6 +236,7 @@ export const DirStructureGrid = ({
 
   return (
     <div
+      className={styles.gridContainer}
       style={{
         flex: 1,
         minHeight: 0,
@@ -246,9 +248,9 @@ export const DirStructureGrid = ({
 
         // const itemWidth = width > 0 ? width / Math.floor(width / 160) : 0;
 
-        const widthWithoutScroll = width > 0 ? width - scrollbarWidth : 1;
+        const widthWithoutScroll = Math.max(1, width - scrollbarWidth);
 
-        const itemCountRow = Math.floor(widthWithoutScroll / 160);
+        const itemCountRow = Math.max(1, Math.floor(widthWithoutScroll / 160));
         const itemWidthWithGap = widthWithoutScroll / itemCountRow
 
         return (
@@ -304,23 +306,21 @@ type ImageProps = {
 
 const Image = ({name, path}: ImageProps) => {
 
-  const imgRef = useRef<HTMLImageElement>(null);
-  const src = `/api/image/preview?path=${path}&size=small`;
-
-  useLayoutEffect(() => {
-    imgRef.current!.src = src;
-    return () => {
-      imgRef.current!.src = '';
-    };
-  }, []);
+  const [status, setStatus] = useState<'loading' | 'loaded' | 'error'>('loading');
+  const src = `/api/image/preview?path=${encodeURIComponent(path)}&size=small`;
 
   return (
-    <img
-      ref={imgRef}
-      className={styles.previewImg}
+    <div className={styles.previewWrapper} aria-busy={status === 'loading'}>
+      {status === 'loading' && <div className={styles.skeleton} aria-hidden="true" />}
+      {status === 'error' && <span className={styles.previewError}>Не удалось загрузить фото</span>}
+      <img
+      className={clsx(styles.previewImg, status === 'loaded' && styles.previewLoaded)}
       src={src}
       alt={name}
       loading="lazy"
+      onLoad={() => setStatus('loaded')}
+      onError={() => setStatus('error')}
     />
+    </div>
   );
 };

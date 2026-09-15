@@ -43,6 +43,7 @@
 }
 
 .selectPanelWrapper {
+    animation: panel-in 120ms ease-out;
     position: absolute;
     top: 0;
     right: 0;
@@ -100,6 +101,7 @@
 }
 
 .btn {
+    transition: background-color 100ms ease, transform 100ms ease;
     display: inline-flex;
     flex-shrink: 0;
     align-items: center;
@@ -117,6 +119,7 @@
 }
 
 .btn:active {
+    transform: scale(0.94);
     background: #E5E7EB;
 }
 
@@ -163,6 +166,19 @@
     flex: 1;
     min-height: 0;
     overflow: hidden;
+}
+
+.loading {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    justify-content: center;
+    color: var(--muted);
+}
+
+@keyframes panel-in {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 .grid {

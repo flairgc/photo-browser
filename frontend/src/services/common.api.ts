@@ -18,8 +18,9 @@ export const fetchDir = async (
   return resp.data;
 };
 
-export const fetchExif = async (path = '') => {
+export const fetchExif = async (path = '', signal?: AbortSignal) => {
   const resp = await api.get<string>('/image/exif', {
+    signal,
     params: {
       path,
     },

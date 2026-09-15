@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useLocation, useSearchParams } from 'wouter';
 
 import { PhotoViewer } from '@/components/PhotoViewer/PhotoViewer.tsx';
+import { Loader } from '@/components/Loader/Loader';
 import { downloadZip, fetchDir } from '@/services/common.api.ts';
 import type { BreadcrumbDto } from '@/types/api.ts';
 import { DirStructureGrid } from '@/components/DirStructureGrid/DirStructureGrid.tsx';
@@ -102,9 +103,11 @@ export function App() {
   const isSelectMode = selectedDirItem.length > 0;
 
   const [errorMessage, setErrorMessage] = useState('');
+  const [loadedDirectory, setLoadedDirectory] = useState<{ path: string; onlyImages: boolean } | null>(null);
 
   // filter
   const [isOnlyImages, setIsOnlyImages] = useState(true);
+  const isLoading = loadedDirectory?.path !== currentPath || loadedDirectory?.onlyImages !== isOnlyImages;
 
   const [sort, setSort] = useState<'ASC' | 'DESC'>('DESC');
 
@@ -119,6 +122,8 @@ export function App() {
       controller.signal,
     )
       .then((data) => {
+        if (controller.signal.aborted) return;
+        setErrorMessage('');
 
         setBreadcrumbs(data.breadcrumbs)
 
@@ -128,12 +133,15 @@ export function App() {
       })
       .catch((error) => {
         // axios при abort кидает специальную ошибку — её игнорируем
-        if (error.name === 'CanceledError') return;
+        if (controller.signal.aborted || error.name === 'CanceledError') return;
 
         setErrorMessage(
           error?.response?.data?.message ||
           `Error fetchDir ${currentPath}`,
         );
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLoadedDirectory({ path: currentPath, onlyImages: isOnlyImages });
       });
 
     return () => {
@@ -234,15 +242,15 @@ export function App() {
       </header>
 
       <main className={styles.container}>
-        {errorMessage && <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>{errorMessage}</div>}
-
-         <DirStructureGrid
+        {isLoading ? <div className={styles.loading}><Loader label="Загрузка папки…" /></div>
+          : errorMessage ? <div role="alert" className={styles.loading}>{errorMessage}</div>
+          : <DirStructureGrid
            items={sortedItems}
            setImageIndexToOpen={setImageIndexToOpen}
            selectItem={selectItem}
            isSelectMode={isSelectMode}
            imageIndexToOpen={imageIndexToOpen}
-         />
+         />}
 
       </main>
 

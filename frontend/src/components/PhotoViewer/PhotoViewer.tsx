@@ -4,6 +4,7 @@ import InfoIcon from '@/assets/info.svg?react';
 import { ExifPlugin } from '@/components/PhotoViewer/ExifPlugin.tsx';
 import { SlideContainer } from '@/components/PhotoViewer/SlideContainer.tsx';
 import { PhotoActionsMenu } from './PhotoActionsMenu';
+import { Loader } from '@/components/Loader/Loader';
 import { CheckBoxIcon, CheckedIcon, FullSizeIcon } from '@/components/PhotoViewer/svg-lib.tsx';
 import { deviceType } from '@/helpers/ui-helper.ts';
 import type { DirItem } from '@/types/fs.ts';
@@ -229,6 +230,7 @@ export function PhotoViewer({images, imageIndexToOpen, setImageIndexToOpen, swit
           },
         }}
         render={{
+          iconLoading: () => <Loader label="Загрузка фото…" />,
           buttonFullscreen: isCompactToolbar ? () => null : undefined,
           buttonDownload: isCompactToolbar ? () => null : undefined,
           slideContainer: (props) => <SlideContainer {...props} toggleUI={() => setIsControlUIHidden(f => !f)}/>
