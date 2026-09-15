@@ -16,7 +16,7 @@ function formatDate(date: Date): string {
 }
 
 export async function readExifText(
-  fullPath: string,
+  fullPath: string | Buffer,
 ): Promise<string | null> {
   try {
     const meta = await sharp(fullPath).metadata();

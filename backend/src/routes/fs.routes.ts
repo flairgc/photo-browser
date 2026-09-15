@@ -1,131 +1,54 @@
 import { FastifyInstance } from 'fastify';
-import fs from 'fs';
-import path from 'path';
+import path from 'node:path';
+import { Readable } from 'node:stream';
 import archiver from 'archiver';
 import { getDirectoryStructure } from '../services/fs.service.js';
-import { resolveSafePath } from '../utils/safePath.js';
-import { CACHE_DIR } from '../services/imageCache.js';
+import { normalizeRelativePath } from '../utils/safePath.js';
+import { storage } from '../services/storageInstance.js';
 
 export default async function fsRoutes(fastify: FastifyInstance) {
   fastify.get('/dir', async (request) => {
-    const { path = '', onlyImages } = request.query as {
-      path?: string;
-      onlyImages?: 'true';
-    };
-
-    return getDirectoryStructure(fastify.config.FS_ROOT, {
-      relativePath: path,
-      onlyImages: onlyImages === 'true',
-    });
+    const { path = '', onlyImages } = request.query as { path?: string; onlyImages?: 'true' };
+    return getDirectoryStructure(fastify.config.FS_ROOT, { relativePath: path, onlyImages: onlyImages === 'true' });
   });
-
   fastify.post('/zip', async (request, reply) => {
-    const body = request.body as any;
-
-    const paths =
-      typeof body.paths === 'string'
-        ? JSON.parse(body.paths)
-        : body.paths;
-
-    const raw = body.raw === 'true';
-
-    if (!Array.isArray(paths) || paths.length === 0) {
-      return reply.code(400).send({ error: 'paths array is required' });
+    const body = request.body as { paths?: unknown; raw?: string | boolean } | null;
+    let paths = body?.paths;
+    try { if (typeof paths === 'string') paths = JSON.parse(paths); }
+    catch { return reply.code(400).send({ error: 'Invalid paths JSON' }); }
+    if (!Array.isArray(paths) || paths.length === 0 || paths.some(p => typeof p !== 'string' || !p)) {
+      return reply.code(400).send({ error: 'paths must be a nonempty array of file paths' });
     }
-
-    // ─────────────────────────────────────────────
-    // cache
-    // ─────────────────────────────────────────────
-    const cacheDir = CACHE_DIR!;
-
-    const firstPath = paths[0];
-    const archiveName =
-      path.dirname(firstPath) === '.' ? 'root' : path.basename(path.dirname(firstPath)) || 'root';
-
-    const archivePath = path.join(
-      cacheDir,
-      `${archiveName}-${Date.now()}.zip`,
-    );
-
-    // ─────────────────────────────────────────────
-    // create zip on disk
-    // ─────────────────────────────────────────────
-    const output = fs.createWriteStream(archivePath);
+    let selected: string[];
+    try { selected = paths.map(p => normalizeRelativePath(p)); }
+    catch { return reply.code(400).send({ error: 'Invalid path' }); }
+    const archiveName = path.posix.basename(path.posix.dirname(selected[0])) || 'root';
     const archive = archiver('zip', { zlib: { level: 9 } });
-
-    archive.on('error', (err) => {
-      fastify.log.error(err);
-      throw err;
-    });
-
-    archive.pipe(output);
-
-    for (const relativePath of paths) {
-      const fullPath = resolveSafePath(
-        fastify.config.FS_ROOT,
-        relativePath,
-      );
-
-      if (!fs.existsSync(fullPath)) continue;
-
-      if (!raw) {
-        archive.file(fullPath, {
-          name: path.basename(relativePath),
-        });
-      } else {
-        const dir = path.dirname(relativePath);
-        const base = path.basename(
-          relativePath,
-          path.extname(relativePath),
-        );
-        const rawPath = path.join(dir, `${base}.ARW`);
-        const rawFull = resolveSafePath(
-          fastify.config.FS_ROOT,
-          rawPath,
-        );
-
-        if (fs.existsSync(rawFull)) {
-          archive.file(rawFull, {
-            name: path.basename(rawPath),
-          });
-        }
+    const inputs: Readable[] = [];
+    archive.once('close', () => inputs.forEach(input => input.destroy()));
+    // Open one source at a time as archiver consumes it, including for large RAW files.
+    for (const selectedPath of selected) {
+      let sourcePath = selectedPath;
+      if (body?.raw === 'true' || body?.raw === true) {
+        const dir = path.posix.dirname(sourcePath);
+        const rawName = `${path.posix.parse(sourcePath).name}.arw`.toLowerCase();
+        const match = (await storage.list(dir === '.' ? '' : dir)).find(e => e.isFile() && e.name.toLowerCase() === rawName);
+        if (!match) continue;
+        sourcePath = path.posix.join(dir, match.name);
       }
+      const input = Readable.from((async function* () {
+        const stream = await storage.stream(sourcePath);
+        try { for await (const chunk of stream) yield chunk; }
+        finally { stream.destroy(); }
+      })());
+      input.on('error', error => archive.destroy(error));
+      inputs.push(input);
+      archive.append(input, { name: path.posix.basename(sourcePath) });
     }
-
-    await archive.finalize();
-
-    // ждём пока файл полностью запишется
-    await new Promise<void>((resolve, reject) => {
-      output.on('close', () => {
-        resolve()
-      });
-      output.on('error', reject);
-    });
-
-    // ─────────────────────────────────────────────
-    // send to browser
-    // ─────────────────────────────────────────────
-    const stat = await fs.promises.stat(archivePath);
-
-    const readStream = fs.createReadStream(archivePath);
-
-    // удаляем файл после завершения передачи
-    reply.raw.on('close', async () => {
-      try {
-        await fs.promises.unlink(archivePath);
-      } catch (e) {
-        fastify.log.warn(e, 'Failed to remove cache zip');
-      }
-    });
-
-    reply
-      .header('Content-Type', 'application/zip')
-      .header(
-        'Content-Disposition',
-        `attachment; filename="${encodeURIComponent(archiveName)}.zip"`,
-      )
-      .header('Content-Length', stat.size);
-
-    return readStream;
+    reply.raw.once('close', () => archive.destroy());
+    archive.on('error', error => fastify.log.error(error, 'ZIP stream failed'));
+    reply.type('application/zip').header('Content-Disposition', `attachment; filename="${encodeURIComponent(archiveName === '.' ? 'root' : archiveName)}.zip"`);
+    void archive.finalize().catch(error => archive.destroy(error));
+    return reply.send(archive);
   });
 }

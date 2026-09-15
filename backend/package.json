@@ -7,10 +7,16 @@
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
-    "start:prod": "npm run build && cross-env NODE_ENV=production node dist/index.js"
+    "start:prod": "npm run build && cross-env NODE_ENV=production node dist/index.js",
+    "cache:warmup": "cross-env NODE_ENV=production tsx src/commands/warmup.ts",
+    "cache:warmup:dev": "tsx src/commands/warmup.ts",
+    "start:warmup": "cross-env BACKEND_CACHE_WARMUP=true npm run start:prod",
+    "test": "tsx --test test/*.test.ts"
   },
   "dependencies": {
+    "@awo00/smb2": "^1.1.1",
     "@fastify/formbody": "^8.0.2",
+    "archiver": "^7.0.1",
     "dotenv": "^16.4.5",
     "exif-reader": "^2.0.3",
     "fastify": "^5.6.2",
@@ -18,6 +24,7 @@
     "sharp": "^0.33.2"
   },
   "devDependencies": {
+    "@types/archiver": "^7.0.0",
     "@types/node": "^20.11.30",
     "@typescript-eslint/eslint-plugin": "^7.4.0",
     "@typescript-eslint/parser": "^7.4.0",

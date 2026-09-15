@@ -1,6 +1,7 @@
-import fs from 'fs/promises';
+import { storage } from './storageInstance.js';
+import { isCachePath } from './imageCache.js';
 // import path from 'path';
-import { resolveSafePath } from '../utils/safePath.js';
+import { normalizeRelativePath } from '../utils/safePath.js';
 
 export interface FsItem {
   name: string;
@@ -37,23 +38,24 @@ function buildBreadcrumbs(relativePath: string) {
 
 
 export async function getDirectoryStructure(
-  root: string,
+  _root: string,
   { relativePath, onlyImages }: { relativePath: string, onlyImages: boolean }
 ): Promise<{
   content: FsItem[],
   breadcrumbs: Breadcrumb[],
 }> {
   const rawRelativePath = relativePath ?? '';
-  const normalizedRelativePath = rawRelativePath.replace(/\\/g, '/');
-  const fullPath = resolveSafePath(root, normalizedRelativePath);
+  const normalizedRelativePath = normalizeRelativePath(rawRelativePath);
 
-  const entries = await fs.readdir(fullPath, { withFileTypes: true });
+
+  const entries = (await storage.list(normalizedRelativePath)).filter(entry =>
+    !isCachePath([normalizedRelativePath, entry.name].filter(Boolean).join('/')));
 
   // 1️⃣ Собираем все RAW-файлы в этой папке
-  const rawFiles = new Set(
+  const rawFiles = new Map(
     entries
       .filter(e => e.isFile() && /\.arw$/i.test(e.name))
-      .map(e => e.name.toLowerCase())
+      .map(e => [e.name.toLowerCase(), e.name])
   );
 
   const content = await Promise.all(
@@ -76,8 +78,8 @@ export async function getDirectoryStructure(
 
         if (rawFiles.has(rawName.toLowerCase())) {
           rawPath = normalizedRelativePath
-            ? `${normalizedRelativePath}/${rawName}`
-            : rawName;
+            ? `${normalizedRelativePath}/${rawFiles.get(rawName.toLowerCase())}`
+            : rawFiles.get(rawName.toLowerCase())!;
         }
       }
 
@@ -102,4 +104,3 @@ export async function getDirectoryStructure(
     content: filteredContent,
   };
 }
-

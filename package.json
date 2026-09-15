@@ -19,6 +19,10 @@
     "dev": "concurrently \"npm:dev:backend\" \"npm:dev:frontend\"",
     "dev:backend": "npm --workspace=backend run dev",
     "dev:frontend": "npm --workspace=frontend run dev ",
-    "start": "concurrently \"npm run preview --workspace frontend\" \"npm run start:prod --workspace backend\""
+    "start": "concurrently \"npm run preview --workspace frontend\" \"npm run start:prod --workspace backend\"",
+    "cache:warmup": "npm --workspace backend run cache:warmup --",
+    "start:warmup": "cross-env BACKEND_CACHE_WARMUP=true npm start",
+    "dev:warmup": "cross-env BACKEND_CACHE_WARMUP=true npm run dev",
+    "test:backend": "npm --workspace backend test"
   }
 }

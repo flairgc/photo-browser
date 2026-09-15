@@ -1,8 +1,8 @@
 import path from 'path';
 import { FastifyInstance } from 'fastify';
-import { createFileStream, createPreviewViewImage } from '../services/image.service.js';
+import { createFileStream, createPreviewViewImage, imageInput } from '../services/image.service.js';
 import { readExifText } from '../utils/readExifText.js';
-import { resolveSafePath } from '../utils/safePath.js';
+
 
 
 export default async function imageRoutes(fastify: FastifyInstance) {
@@ -44,7 +44,7 @@ export default async function imageRoutes(fastify: FastifyInstance) {
       return reply.code(400).send({ error: 'path is required' });
     }
 
-    const fullPath = resolveSafePath(fastify.config.FS_ROOT, path);
+    const fullPath = await imageInput(path);
 
     return await readExifText(fullPath);
   });
