@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useLocation, useSearchParams } from 'wouter';
 
 import { PhotoViewer } from '@/components/PhotoViewer/PhotoViewer.tsx';
@@ -6,7 +6,6 @@ import { downloadZip, fetchDir } from '@/services/common.api.ts';
 import type { BreadcrumbDto } from '@/types/api.ts';
 import { DirStructureGrid } from '@/components/DirStructureGrid/DirStructureGrid.tsx';
 import type { DirItem } from '@/types/fs.ts';
-import HomeIcon from '@/assets/home.svg?react';
 import ImageIcon from '@/assets/image.svg?react';
 import SortUpIcon from '@/assets/sort-up.svg?react';
 import SortDownIcon from '@/assets/sort-down.svg?react';
@@ -192,32 +191,30 @@ export function App() {
 
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100dvh' }}>
+    <div className={styles.app}>
       <header className={styles.header}>
         <div className={styles.wrapper}>
-          <button className={styles.btn} title="Домой" onClick={() => navigate('/')}>
-            <HomeIcon />
-          </button>
-
           <nav className={styles.breadcrumbs}>
             <span className={styles.anchor} onClick={() => navigate('/')}>Главная</span>
             {breadcrumbs.map((item) => {
               return (
-                <Fragment key={item.path}>
+                <span className={styles.breadcrumbItem} key={item.path}>
                   <span className={styles.breadcrumbsSlash}>/</span>
                   <span className={styles.anchor} onClick={() => navigate('/' + item.path)}>{item.name}</span>
-                </Fragment>
+                </span>
             )
             })}
           </nav>
 
-          <div className={styles.btn_group}>
-            <button className={styles.btn} title="Сортировка" onClick={() => setSort(sort => sort === 'ASC' ? 'DESC' : 'ASC')}>
-              {sort === 'ASC' ? <SortDownIcon /> : <SortUpIcon />}
-            </button>
-            <button className={styles.btn} style={{backgroundColor: isOnlyImages ? '#E5E7EB' : undefined}} title="Только изображения" onClick={() => setIsOnlyImages((f) => !f)}>
-              <ImageIcon />
-            </button>
+          <div className={styles.headerActions}>
+            <div className={styles.btn_group}>
+              <button className={styles.btn} title="Сортировка" onClick={() => setSort(sort => sort === 'ASC' ? 'DESC' : 'ASC')}>
+                {sort === 'ASC' ? <SortDownIcon /> : <SortUpIcon />}
+              </button>
+              <button className={styles.btn} style={{backgroundColor: isOnlyImages ? '#E5E7EB' : undefined}} title="Только изображения" onClick={() => setIsOnlyImages((f) => !f)}>
+                <ImageIcon />
+              </button>
+            </div>
           </div>
         </div>
         {selectedDirItem.length > 0 ?

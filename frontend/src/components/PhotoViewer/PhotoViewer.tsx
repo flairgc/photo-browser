@@ -3,15 +3,17 @@ import AlmazIcon from '@/assets/almaz.svg?react';
 import InfoIcon from '@/assets/info.svg?react';
 import { ExifPlugin } from '@/components/PhotoViewer/ExifPlugin.tsx';
 import { SlideContainer } from '@/components/PhotoViewer/SlideContainer.tsx';
+import { PhotoActionsMenu } from './PhotoActionsMenu';
 import { CheckBoxIcon, CheckedIcon, FullSizeIcon } from '@/components/PhotoViewer/svg-lib.tsx';
 import { deviceType } from '@/helpers/ui-helper.ts';
 import type { DirItem } from '@/types/fs.ts';
 import { clsx } from 'clsx';
-import { useRef, useState } from 'react';
+import { useRef, useState, useSyncExternalStore } from 'react';
 import {
   IconButton,
   Lightbox,
   useLightboxState,
+  type FullscreenRef,
 } from "yet-another-react-lightbox";
 import "yet-another-react-lightbox/styles.css";
 import "yet-another-react-lightbox/plugins/captions.css";
@@ -24,6 +26,7 @@ import styles from "./PhotoViewer.module.css";
 
 declare module "yet-another-react-lightbox" {
   interface Labels {
+    "Ещё"?: string;
     "Checkbox button"?: string;
     "Raw button"?: string;
     // "Open file button"?: string;
@@ -181,12 +184,22 @@ type Props = {
   selectItem: (name: string, flag?: boolean) => void;
 }
 
+const compactToolbarQuery = '(width < 660px)';
+const subscribeCompactToolbar = (onChange: () => void) => {
+  const query = window.matchMedia(compactToolbarQuery);
+  query.addEventListener('change', onChange);
+  return () => query.removeEventListener('change', onChange);
+};
+
 export function PhotoViewer({images, imageIndexToOpen, setImageIndexToOpen, switchPhotoFullSize, selectItem }: Props) {
 
   const [isControlUIHidden, setIsControlUIHidden] = useState(false);
   const [isExifShow, setIsExifShow] = useState(false);
+  const isCompactToolbar = useSyncExternalStore(subscribeCompactToolbar,
+    () => window.matchMedia(compactToolbarQuery).matches, () => false);
 
   const lightboxRef = useRef(null);
+  const fullscreenRef = useRef<FullscreenRef>(null);
 
   return (
       <Lightbox
@@ -216,6 +229,8 @@ export function PhotoViewer({images, imageIndexToOpen, setImageIndexToOpen, swit
           },
         }}
         render={{
+          buttonFullscreen: isCompactToolbar ? () => null : undefined,
+          buttonDownload: isCompactToolbar ? () => null : undefined,
           slideContainer: (props) => <SlideContainer {...props} toggleUI={() => setIsControlUIHidden(f => !f)}/>
         }}
         slides={images.map((item) => ({
@@ -230,7 +245,13 @@ export function PhotoViewer({images, imageIndexToOpen, setImageIndexToOpen, swit
           isSelected: item.isSelected,
         }))}
         toolbar={{
-          buttons: [
+          buttons: isCompactToolbar ? [
+            "fullscreen",
+            <CheckBoxButton key="checkbox-button" selectItem={selectItem}/>,
+            <PhotoActionsMenu key={`actions-${imageIndexToOpen}`} onToggleInfo={() => setIsExifShow(f => !f)} makeFullSize={switchPhotoFullSize} fullscreenRef={fullscreenRef}/>,
+            "download",
+            "close",
+          ] : [
             <CheckBoxButton key="checkbox-button" selectItem={selectItem}/>,
             <InfoButton key="open-info-button" onToggle={() => setIsExifShow(f => !f)}/>,
             // <OpenPreviewButton key="open-preview-button" />,
@@ -239,6 +260,7 @@ export function PhotoViewer({images, imageIndexToOpen, setImageIndexToOpen, swit
             "close"],
         }}
         showExif={isExifShow}
+        fullscreen={{ ref: fullscreenRef }}
         hideUI={isControlUIHidden}
         plugins={[Fullscreen, Zoom, Captions, Download, ExifPlugin]}
       />

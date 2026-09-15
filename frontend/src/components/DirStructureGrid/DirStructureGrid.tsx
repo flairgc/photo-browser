@@ -236,7 +236,8 @@ export const DirStructureGrid = ({
   return (
     <div
       style={{
-        height: '100%',
+        flex: 1,
+        minHeight: 0,
         width: '100%',
       }}
     >

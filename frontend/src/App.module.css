@@ -7,9 +7,14 @@
     --border: #e5e7eb;
     --radius: 12px;
 
-    height: 100dvh;
 }
 
+.app {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+}
 
 /* ===== Header ===== */
 
@@ -23,6 +28,7 @@
     /*background: var(--card);*/
     /*border-bottom: 1px solid var(--border);*/
     position: relative;
+    flex-shrink: 0;
     background: var(--card);
     border-bottom: 1px solid var(--border);
 }
@@ -70,15 +76,32 @@
     padding: 0 4px;
 }
 
+.headerActions {
+    container: header-actions / size;
+    align-self: stretch;
+    flex: 0 0 80px;
+    min-height: 36px;
+}
+
 .btn_group {
     display: flex;
+    height: 100%;
+    flex-shrink: 0;
     align-items: center;
     justify-content: center;
     gap: 8px;
 }
 
+@container header-actions (min-height: 80px) {
+    .btn_group {
+        flex-direction: column;
+        align-items: flex-end;
+    }
+}
+
 .btn {
     display: inline-flex;
+    flex-shrink: 0;
     align-items: center;
     justify-content: center;
     width: 36px;
@@ -99,13 +122,25 @@
 
 .breadcrumbs {
     display: flex;
+    flex-wrap: wrap;
+    min-width: 0;
     align-items: center;
     gap: 8px;
     flex-grow: 1;
     font-size: 14px;
 }
 
+.breadcrumbItem {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 8px;
+    max-width: 100%;
+    min-width: 0;
+}
+
 .anchor {
+    min-width: 0;
+    overflow-wrap: anywhere;
     color: var(--accent);
     text-decoration: none;
     cursor: pointer;
@@ -116,15 +151,18 @@
 }
 
 .breadcrumbsSlash {
+    flex-shrink: 0;
     color: var(--muted);
 }
 
 /* ===== Content ===== */
 
 .container {
-    /*padding: 0 12px;*/
-    flex-grow: 1;
-    /*height: 100%;*/
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
 }
 
 .grid {
