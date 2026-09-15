@@ -24,17 +24,16 @@ function splitAndSort(
   const directories = items.filter(i => i.type === 'directory');
   const rest = items.filter(i => i.type !== 'directory');
 
-  // 2. Универсальный компаратор
-  const sortByName = (a: DirItem, b: DirItem) => {
-    const result = a.name.localeCompare(b.name, 'ru', {
+  // 2. Папки всегда по алфавиту; направление сортировки меняется только у файлов.
+  const sortByName = (a: DirItem, b: DirItem) =>
+    a.name.localeCompare(b.name, 'ru', {
       sensitivity: 'base',
     });
 
-    return sort === 'ASC' ? result : -result;
-  };
-
   const sortedDirs = [...directories].sort(sortByName);
-  const sortedRest = [...rest].sort(sortByName);
+  const sortedRest = [...rest].sort((a, b) =>
+    sort === 'ASC' ? sortByName(a, b) : -sortByName(a, b)
+  );
 
   let imageIndex = 0;
 
