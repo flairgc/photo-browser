@@ -120,6 +120,10 @@
     transform: scale(0.94);
 }
 
+.loaderLight {
+    color: rgba(255, 255, 255, 0.85);
+}
+
 .exifPanel {
     animation: menu-in 120ms ease-out;
     max-height: calc(100% - 62px);

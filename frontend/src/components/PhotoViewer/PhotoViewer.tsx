@@ -230,7 +230,7 @@ export function PhotoViewer({images, imageIndexToOpen, setImageIndexToOpen, swit
           },
         }}
         render={{
-          iconLoading: () => <Loader label="Загрузка фото…" />,
+          iconLoading: () => <div className={styles.loaderLight}><Loader label="Загрузка фото…" /></div>,
           buttonFullscreen: isCompactToolbar ? () => null : undefined,
           buttonDownload: isCompactToolbar ? () => null : undefined,
           slideContainer: (props) => <SlideContainer {...props} toggleUI={() => setIsControlUIHidden(f => !f)}/>

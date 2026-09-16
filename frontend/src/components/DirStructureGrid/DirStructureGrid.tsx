@@ -243,6 +243,9 @@ export const DirStructureGrid = ({
         width: '100%',
       }}
     >
+    {items.length === 0 ? (
+      <div className={styles.empty}>Папка пустая</div>
+    ) : (
     <ParentSize>
       {({ height, width }) => {
 
@@ -281,8 +284,8 @@ export const DirStructureGrid = ({
            />
       )}}
     </ParentSize>
-      {(
-        <button
+    )}
+      {(        <button
           className={`${styles.fab} ${showScrollTop ? styles.visible : styles.hidden}`}
           onClick={() => {
             virtuosoRef.current?.scrollToIndex({
